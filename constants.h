@@ -1,0 +1,12 @@
+#ifndef _XSM_CONSTANTS_H
+
+#define XSM_CONSTANTS_H
+
+#define XSM_WORD_SIZE 16
+#define XSM_NUM_PAGES 128
+#define XSM_PAGE_SIZE 512
+
+#define XSM_REGSIZE XSM_WORD_SIZE
+#define XSM_NUM_REG 33
+
+#endif
