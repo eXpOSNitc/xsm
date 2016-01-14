@@ -1,11 +1,15 @@
 -?[0-9]+ {
-   yylval = strdup(yytext);
+   yylval.str = strdup(yytext);
    return TOKEN_NUMBER;
 }
 
 \"[^"]* {
-   yylval = strdup(yytext);
+   yylval.str = strdup(yytext);
    return TOKEN_STRING;
+}
+
+, {
+   return TOKEN_COMMA;
 }
 
 \[ {
@@ -53,16 +57,16 @@ EMA {
 }
 
 P[0-3] {
-   yylval = strdup(yytext);
+   yylval.str = strdup(yytext);
    return TOKEN_PORT;
 }
 
 R[0-9]+ {
-   yylval = strdup(yytext);
+   yylval.str = strdup(yytext);
    return TOKEN_REGISTER;
 }
 
 [a-zA-Z] {
-   yylval = strdup(yytext);
+   yylval.str = strdup(yytext);
    return TOKEN_INSTRUCTION;
 }

@@ -6,7 +6,9 @@
 
 #define XSM_DIRECT_ADDR 0
 #define XSM_INDIRECT_ADDR 1
-#define XSM_CONSTANT 2
+
+#define PREVILEGE_USER 0
+#define PREVILEGE_KERNEL 1
 
 /* Operation codes. */
 #define MOV       0
@@ -79,15 +81,27 @@ struct _xsm_instruction
 {
    /* Operation code. */
    int opcode;
+   /* The previlege that is required for executing this instruction. */
+   int previlege;
    /* Addressing mode for left and right operands.*/
    int src_mode, dest_mode;
    /* Left and right operands. */
    xsm_word *dest;
    xsm_word *src;
    /* Additional information for the left and right operands. */
-   xsm_word *dest_address;
-   xsm_word *src_address;
+   xsm_word *dest_info;
+   xsm_word *src_info;
 }
 xsm_instruction;
+
+typedef
+struct _xsm_operand
+{
+   int mode;
+   int previlege;
+   xsm_word *reg_or_mem;
+   xsm_word *info;
+}
+xsm_operand;
 
 #endif
