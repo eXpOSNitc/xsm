@@ -31,4 +31,14 @@ struct _xsm_options
 }
 xsm_options;
 
+typedef
+struct _xsm_instruction
+{
+   int op_opcode;
+   xsm_reg *reg_dest;
+   xsm_reg *reg_src;
+   xsm_word info;
+}
+xsm_instruction;
+
 #endif
