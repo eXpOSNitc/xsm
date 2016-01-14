@@ -1,5 +1,7 @@
 #ifndef XSM_TYPES_H
 
+#include "constants.h"
+
 #define XSM_TYPES_H
 
 #define R0     0
@@ -38,11 +40,17 @@
 #define EPN_REG   31
 #define EMA_REG   32
 
+/* Fundamental unit. */
 typedef
-struct _xsm_reg
+struct _xsm_word
 {
-   char val[XSM_REGSIZE];
+   char val[XSM_WORDSIZE];
 }
+xsm_word;
+
+/* Register is an alias dictum for word. */
+typedef
+xsm_word
 xsm_reg;
 
 #endif
