@@ -4,6 +4,10 @@
 
 #define XSM_TYPES_H
 
+/* Data types. */
+#define XSM_TYPE_STRING 0
+#define XSM_TYPE_INTEGER 1
+
 #define R0     0
 #define R1     1
 #define R2     2

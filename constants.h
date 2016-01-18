@@ -11,4 +11,7 @@
 
 #define XSM_ILLINSTR -1
 
+#define XSM_SUCCESS 1
+#define XSM_FAILURE 0
+
 #endif

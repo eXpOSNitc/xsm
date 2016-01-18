@@ -1,3 +1,10 @@
+%{
+   /* Include files. */
+   #include "machine.h"
+}
+%}
+%%
+
 -?[0-9]+ {
    yylval.str = strdup(yytext);
    return TOKEN_NUMBER;

@@ -1,4 +1,6 @@
 %{
+#include <stdlib.h>
+
 #include "machine.h"
 %}
 
@@ -70,9 +72,9 @@ special_reg:
 ;
 
 dref_location:
-   TOKEN_DREF_L register TOKEN_DREF_R
+   TOKEN_DREF_L register TOKEN_DREF_R {$$.reg_or_mem = register_from_name ($2);}
    |
-   TOKEN_DREF_L number TOKEN_DREF_R
+   TOKEN_DREF_L number TOKEN_DREF_R{$$.reg_or_mem = memory_get_word(atoi(number));}
    |
    TOKEN_DREF_L number TOKEN_DREF_R number
    |
