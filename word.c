@@ -1,5 +1,7 @@
 #include "word.h"
 
+#include <stdlib.h>
+
 /* Utility functions. An interface between UNIX and XSM data types. */
 
 /* Determine the type of data in the word. */
@@ -37,7 +39,7 @@ word_get_string (xsm_word* word)
 }
 
 int
-word_store_integer (int integer)
+word_store_integer (xsm_word* word, int integer)
 {
 	char *data;
 
@@ -49,7 +51,7 @@ word_store_integer (int integer)
 }
 
 int
-word_store_string (const char *str)
+word_store_string (xsm_word *word, const char *str)
 {
 	char *data;
 
