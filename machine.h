@@ -7,8 +7,8 @@
 #define XSM_DIRECT_ADDR 0
 #define XSM_INDIRECT_ADDR 1
 
-#define PREVILEGE_USER 0
-#define PREVILEGE_KERNEL 1
+#define PRIVILEGE_USER 0
+#define PRIVILEGE_KERNEL 1
 
 /* Operation codes. */
 #define MOV       0

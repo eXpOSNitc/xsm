@@ -1,12 +1,13 @@
 %{
    /* Include files. */
+   #include <stdlib.h>
    #include "machine.h"
 }
 %}
 %%
 
 -?[0-9]+ {
-   yylval.str = strdup(yytext);
+   yylval.val = atoi(yytext);
    return TOKEN_NUMBER;
 }
 
