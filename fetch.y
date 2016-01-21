@@ -40,7 +40,7 @@ operand:
    |
    number
    |
-   dref_location
+   dref_location {$$= $1; $$.mode = XSM_ADDR_DREF;}
 ;
 
 number:
@@ -78,15 +78,15 @@ special_reg:
 ;
 
 dref_location:
-   TOKEN_DREF_L register TOKEN_DREF_R {$$.reg_or_mem = $2; } //TODO
+   TOKEN_DREF_L register TOKEN_DREF_R {$$ = $2; word_store_integer(&$$.info, 0); }
    |
-   TOKEN_DREF_L TOKEN_NUMBER TOKEN_DREF_R{$$.reg_or_mem = memory_get_word($2);}
+   TOKEN_DREF_L TOKEN_NUMBER TOKEN_DREF_R{$$.reg_or_mem = register_zero_register(); word_store_integer(&$$.info, $2);}
    |
-   TOKEN_DREF_L TOKEN_NUMBER TOKEN_DREF_R TOKEN_NUMBER
+   TOKEN_DREF_L TOKEN_NUMBER TOKEN_DREF_R TOKEN_NUMBER {$$.reg_or_mem = register_zero_register(); word_store_integer(&$$.info, $2 + $4); }
    |
-   TOKEN_DREF_L TOKEN_NUMBER TOKEN_DREF_R register 
+   TOKEN_DREF_L TOKEN_NUMBER TOKEN_DREF_R register {$$ = $4; word_store_integer(&$$.info, $2);}
 ;
 
 opcode:
-   TOKEN_INSTRUCTION {$$.instr.opcode = machine_get_opcode ($1); }
+   TOKEN_INSTRUCTION {$$.opcode = machine_get_opcode ($1); }
 ;

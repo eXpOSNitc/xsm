@@ -43,6 +43,13 @@ const char *instructions[]=
 };
 
 int
+machine_init ()
+{
+   /* TODO :Add initialization code here. */
+   
+}
+
+int
 machine_get_opcode (const char* instr)
 {
    int i;

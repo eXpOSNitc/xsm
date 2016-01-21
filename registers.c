@@ -2,6 +2,9 @@ static
 xsm_reg *_registers;
 
 static
+xsm_reg *_zero_register;
+
+static
 const
 char *_register_names[] = {
    "R0",
@@ -44,10 +47,19 @@ char *_register_names[] = {
 int
 registers_init ()
 {
+   /* Set up the registers. */
    _registers = (xsm_reg *) malloc (sizeof(xsm_reg) * XSM_NUM_REG);
    
    if (!_registers)
       return XSM_FAILED;
+      
+   /* The zero register. */
+   _zero_register = (xsm_reg *) malloc (sizeof(xsm_reg));
+   
+   if (!_zero_register)
+      return XSM_FAILED;
+   
+   word_store_integer (_zero_register, 0);
       
    return XSM_SUCCESS;   
 }
@@ -64,6 +76,12 @@ registers_get_register (const char *name)
    }
    
    return NULL;
+}
+
+xsm_reg*
+registers_zero_register ()
+{
+   return _zero_register;
 }
 
 void

@@ -4,8 +4,8 @@
 
 #include "types.h"
 
-#define XSM_DIRECT_ADDR 0
-#define XSM_INDIRECT_ADDR 1
+#define XSM_ADDR_DREF 0
+#define XSM_ADDR_NODREF 1
 
 #define PRIVILEGE_USER 0
 #define PRIVILEGE_KERNEL 1
@@ -89,8 +89,8 @@ struct _xsm_instruction
    xsm_word *dest;
    xsm_word *src;
    /* Additional information for the left and right operands. */
-   xsm_word *dest_info;
-   xsm_word *src_info;
+   xsm_word dest_info;
+   xsm_word src_info;
 }
 xsm_instruction;
 
@@ -100,7 +100,7 @@ struct _xsm_operand
    int mode;
    int previlege;
    xsm_word *reg_or_mem;
-   xsm_word *info;
+   xsm_word info;
 }
 xsm_operand;
 
