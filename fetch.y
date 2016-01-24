@@ -21,8 +21,12 @@
 %type <val> TOKEN_NUMBER
 
 instruction_stream:
-   instruction_stream instruction
+   instruction_stream instruction_executed
    |
+;
+
+instruction_executed:
+   instruction {machine_on_instruction($1); }
 ;
 
 instruction:
@@ -36,15 +40,11 @@ instruction:
 operand:
    register
    |
-   string
+   string {$$.mode = XSM_ADDR_NODREF; word_store_string(&$$.info, $1); $$.reg_or_mem = registers_zero_register(); }
    |
-   number
+   TOKEN_NUMBER {$$.mode = XSM_ADDR_NODREF; word_store_integer(&$$.info, $1); $$.reg_or_mem = registers_zero_register(); }
    |
-   dref_location {$$= $1; $$.mode = XSM_ADDR_DREF;}
-;
-
-number:
-   TOKEN_NUMBER {$$.regis
+   dref_location {$$ = $1; $$.mode = XSM_ADDR_DREF;}
 ;
 
 register:
