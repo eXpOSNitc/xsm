@@ -3,6 +3,9 @@
 #include "machine.h"
 #include "tokenize.h"
 
+static
+xsm_cpu _thecpu;
+
 const char *instructions[]=
 {
    "MOV",
@@ -294,4 +297,76 @@ machine_get_address ()
    address = machine_translate_address (address);
 
    return memory_get_word(address);
+}
+
+int
+machine_translate_address (int address)
+{
+   int ptbr;
+
+   if (_thecpu->mode == XSM_MODE_KERNEL)
+      return address;
+
+   /* User mode, ask the MMU to translate. */
+   ptbr = word_get_integer (registers_get_register("PTBR"));
+   return memory_translate_address (ptbr, address);
+}
+
+int
+machine_execute_arith (int opcode)
+{
+   int result;
+   xsm_reg *l_operand, *r_operand;
+   YYSTYPE token_info;
+   int l_value, r_value;
+
+   token = tokenize_next_token(&token_info);
+
+   if (token != TOKEN_REGISTER)
+      machine_raise_exception ("Wrong operand.");
+
+   l_operand = registers_get_register(token_info.str);
+   l_value = word_get_integer(l_operand);
+
+   /* Next one is a comma, neglect. */
+   tokenize_next_token(&token_info);
+
+   token = tokenize_next_token(&token_info);
+
+   if (token == TOKEN_NUMBER)
+   {
+      r_value = token_info.val;
+   }
+   else
+   {
+      r_operand = registers_get_register(token_info.str);
+      r_value = word_get_integer (r_operand);
+   }
+
+   switch (opcode)
+   {
+      case ADD:
+         result = r_value + l_value;
+         break;
+
+      case SUB:
+         result = l_value - r_value;
+         break;
+
+      case MUL:
+         result = l_value * r_value;
+         break;
+
+      case DIV:
+         /* Integer division by zero !*/
+         result = l_value / r_value;
+         break;
+
+      case MOD:
+         result = l_value / r_value;
+         break;
+   }
+
+   word_store_integer (l_operand, result);
+   return XSM_SUCCESS;
 }

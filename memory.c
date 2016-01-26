@@ -33,6 +33,12 @@ memory_is_address_valid (int address)
    return TRUE;
 }
 
+int
+memory_translate_address (int ptbr, int address)
+{
+   /* What ?*/
+}
+
 void 
 memory_destroy()
 {
