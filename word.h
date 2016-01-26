@@ -20,4 +20,7 @@ word_store_integer (xsm_word *word, int integer);
 int
 word_store_string (xsm_word *word, const char *str);
 
+void
+word_copy (xsm_word* dest, xsm_word *src);
+
 #endif

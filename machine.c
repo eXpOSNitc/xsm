@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "machine.h"
+#include "tokenize.h"
 
 const char *instructions[]=
 {
@@ -67,9 +68,10 @@ int
 machine_run ()
 {
    int token, opcode;
+   YYSTYPE token_info;
 
    while (TRUE){
-      token = yylex();
+      token = tokenize_next_token (&token_info);
 
       if (token != TOKEN_INSTRUCTION)
       {
@@ -81,6 +83,8 @@ machine_run ()
 
       /* TODO: Post executing instruction. */
    }
+
+   return TRUE;
 }
 
 int
@@ -166,4 +170,128 @@ machine_execute_instruction (int opcode)
          machine_execute_restore ();
          break;
    }
+
+   return TRUE;
+}
+
+int
+machine_execute_mov ()
+{
+   int token;
+   xsm_word *l_address, *r_address;
+   YYSTYPE token_info;
+
+   token = tokenize_peek (&token_info);
+
+   switch (token)
+   {
+      case TOKEN_DREF_L:
+         l_address = machine_get_address ();
+         break;
+
+      case TOKEN_REGISTER:
+         l_address = registers_get_register (yylval.str);
+         token = tokenize_next_token (&token_info);
+         break;
+   }
+
+   if (!address)
+   {
+      machine_raise_exception("Error in calculating the target address.");
+      return;
+   }
+
+   token = tokenize_next_token(&token_info);
+
+   if (token != TOKEN_COMMA)
+   {
+      machine_raise_exception ("Malformed instruction.");
+      return XSM_FAILURE;
+   }
+
+   token = tokenize_peek (&token_info);
+
+   switch (token)
+   {
+      case TOKEN_DREF_L:
+         r_address = machine_get_address ();
+         word_copy (l_adress, r_address);
+         break;
+
+      case TOKEN_REGISTER:
+         r_address = registers_get_register(yylval.str);
+         word_copy (l_address, r_address);
+         tokenize_next_token(&token_info);
+         break;
+
+      case TOKEN_NUMBER:
+         word_store_integer (l_address, atoi(yylval.val));
+         tokenize_next_token(&token_info);
+         break;
+
+      case TOKEN_STRING:
+         word_store_string (l_address, yylval.str);
+         tokenize_next_token(&token_info);
+         break;
+
+      default:
+         /* Nothing to do. */
+   }
+
+   return XSM_SUCCESS;
+}
+
+xsm_word*
+machine_get_address ()
+{
+   int token, address;
+   YYSTYPE token_info;
+
+   /* Skip the opening square bracket. */
+   tokenize_next_token(&token_info);
+   token = tokenize_next_token(&token_info);
+
+   switch (token)
+   {
+      case TOKEN_REGISTER:
+      {
+         xsm_reg *reg = registers_get_register (token_info.str);
+         address = word_get_integer (reg);
+      }
+      break;
+
+      case TOKEN_NUMBER:
+         address = token_info.val;
+         break;
+
+      default:
+         /* Mark him. */
+         machine_raise_exception ("Invalid memory derefence.");
+   }
+
+   /* Next one is a bracket, neglect. */
+   tokenize_next_token(&token_info);
+
+   /* What is the next one ? A comma ?*/
+
+   token = tokenize_peek (&token_info);
+
+   switch (token)
+   {
+      case TOKEN_REGISTER:
+      {
+         xsm_reg *reg = registers_get_register (token_info.str);
+         address = address + word_get_integer(reg);
+      }
+      break;
+
+      case TOKEN_NUMBER:
+         address = address + token_info.val;
+         break;
+   }
+
+   /* Ask the MMU to translate the address for us. */
+   address = machine_translate_address (address);
+
+   return memory_get_word(address);
 }

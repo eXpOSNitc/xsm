@@ -59,3 +59,9 @@ word_store_string (xsm_word *word, const char *str)
 
 	return strncpy (data, str, XSM_WORD_SIZE);
 }
+
+void
+word_copy (xsm_word *dest, xsm_word *src)
+{
+	memcpy (dest, src, sizeof(xsm_word));
+}
