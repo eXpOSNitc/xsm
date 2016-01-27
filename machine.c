@@ -370,3 +370,44 @@ machine_execute_arith (int opcode)
    word_store_integer (l_operand, result);
    return XSM_SUCCESS;
 }
+
+int
+machine_execute_jump (int opcode)
+{
+   int test, target, token;
+   YYSTYPE token_info;
+
+   token = tokenize_next_token(&token_info);
+
+   if (token == TOKEN_NUMBER)
+   {
+      test = TRUE; /* Take the branch, the jump is unconditional. */
+
+      target = token_info.val;
+   }
+   else 
+   {
+      test = word_get_integer(registers_get_register(token_info.str));
+      /* Skip the comma. */
+      tokenize_next_token(&token_info);
+      token = tokenize_next_token(&token_info);
+      target = token_info.val;
+   }
+
+   if (JZ == opcode)
+      test = !test;
+
+   target = machine_translate_address (target);
+
+   if (test)
+   {
+      /* Take the branch. */
+      word_store_integer (registers_get_register("IP"), target);
+   }
+   else
+   {
+      /* Nothing to do. */
+   }
+
+   return XSM_SUCCESS;
+}
