@@ -14,4 +14,6 @@
 #define XSM_SUCCESS 1
 #define XSM_FAILURE 0
 
+#define XSM_INSTRUCTION_SIZE 2
+
 #endif

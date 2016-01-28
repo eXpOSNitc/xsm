@@ -416,23 +416,15 @@ int
 machine_execute_stack (int opcode)
 {
    YYSTYPE token_info;
-   int stack_top;
    xsm_word *reg;
    xsm_word *xw_stack_top;
-   xsm_word *sp_reg;
    int token;
-
-   sp_reg = registers_get_register("SP");
-   stack_top = word_get_integer(sp_reg);
-
-   /* Address translation */
-   stack_top = machine_translate_address(stack_top);
 
    token = tokenize_next_token(&token_info);
 
    if (token == TOKEN_REGISTER)
    {
-      reg = registers_get_register(token_info.val);
+      reg = registers_get_register(token_info.str);
    }
    else
    {
@@ -440,7 +432,7 @@ machine_execute_stack (int opcode)
 
    }
 
-   xw_stack_top = memory_get_word(stack_top);
+   xw_stack_top = machine_stack_pointer();
 
    switch (opcode)
    {
@@ -455,6 +447,69 @@ machine_execute_stack (int opcode)
          word_store_integer(sp_reg, stack_top - 1);
          break;
    }
+
+   return XSM_SUCCESS;
+}
+
+xsm_word*
+machine_stack_pointer ()
+{
+   xsm_word *sp_reg;
+   int stack_top;
+
+   sp_reg = registers_get_register ("SP");
+   stack_top = word_get_integer(sp_reg);
+
+   stack_top = machine_translate_address (stack_top);
+
+   return memory_get_word(stack_top);
+}
+
+int
+machine_execute_call ()
+{
+   int token;
+   YYSTYPE token_info;
+   int target, curr_ip, curr_sp;
+   xsm_word *ipreg;
+   xsm_word *stack_pointer;
+   xsm_word *spreg;
+
+   token = tokenize_next_token(&token_info);
+   target = token_info.val;
+
+   ipreg = registers_get_register("IP");
+   curr_ip = word_get_integer(ipreg);
+
+   stack_pointer = machine_stack_pointer ();
+   word_store_integer(stack_pointer, curr_ip + XSM_INSTRUCTION_SIZE);
+
+   spreg = registers_get_register("SP");
+   curr_sp = word_get_integer(spreg);
+   word_store_integer(spreg, curr_sp + 1);
+
+   word_store_integer (ipreg, target);
+   return XSM_SUCCESS;
+}
+
+int
+machine_execute_ret ()
+{
+   int target;
+   xsm_word *spreg, *ipreg;
+   xsm_word *stack_pointer;
+   int curr_sp;
+
+   spreg = registers_get_register ("SP");
+   stack_pointer = machine_stack_pointer ();
+   target = word_get_integer(stack_pointer);
+
+   curr_sp = word_get_integer (spreg);
+   curr_sp = curr_sp - 1;
+   word_store_integer (spreg, curr_sp);
+
+   ipreg = registers_get_register("IP");
+   word_store_integer (ipreg, target);
 
    return XSM_SUCCESS;
 }
