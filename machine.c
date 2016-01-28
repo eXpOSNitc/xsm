@@ -466,17 +466,12 @@ machine_stack_pointer ()
 }
 
 int
-machine_execute_call ()
+machine_execute_call_do (int target)
 {
-   int token;
-   YYSTYPE token_info;
    int target, curr_ip, curr_sp;
    xsm_word *ipreg;
    xsm_word *stack_pointer;
    xsm_word *spreg;
-
-   token = tokenize_next_token(&token_info);
-   target = token_info.val;
 
    ipreg = registers_get_register("IP");
    curr_ip = word_get_integer(ipreg);
@@ -490,6 +485,18 @@ machine_execute_call ()
 
    word_store_integer (ipreg, target);
    return XSM_SUCCESS;
+}
+
+int
+machine_execute_call ()
+{
+   int token, target;
+   YYSTYPE token_info;
+
+   token = tokenize_next_token(&token_info);
+   target = token_info.val;
+
+   machine_execute_call_do (target);
 }
 
 int
@@ -512,4 +519,38 @@ machine_execute_ret ()
    word_store_integer (ipreg, target);
 
    return XSM_SUCCESS;
+}
+
+int
+machine_execute_interrupt()
+{
+   int token;
+   YYSTYPE token_info;
+   int interrupt_num, target;
+
+   token = tokenize_next_token(&token_info);
+
+   interrupt_num = token_info.val;
+   target = machine_interrupt_address (interrupt_num);
+
+   machine_execute_call_do (target);
+
+   /* Change the mode now, that will do. */
+   machine_set_mode (XSM_MODE_KERNEL);
+   return XSM_SUCCESS;
+}
+
+int
+machine_interrupt_address (int int_num)
+{
+   if (int_num < 4 || int_num > 18)
+      return -1; /* Not supposed to happen. */
+
+   return (int_num * 2 + 4) * XSM_PAGE_SIZE;
+}
+
+void
+machine_set_mode (int mode)
+{
+   _thecpu.mode = mode;
 }
