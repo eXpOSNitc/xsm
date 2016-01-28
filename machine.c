@@ -411,3 +411,50 @@ machine_execute_jump (int opcode)
 
    return XSM_SUCCESS;
 }
+
+int
+machine_execute_stack (int opcode)
+{
+   YYSTYPE token_info;
+   int stack_top;
+   xsm_word *reg;
+   xsm_word *xw_stack_top;
+   xsm_word *sp_reg;
+   int token;
+
+   sp_reg = registers_get_register("SP");
+   stack_top = word_get_integer(sp_reg);
+
+   /* Address translation */
+   stack_top = machine_translate_address(stack_top);
+
+   token = tokenize_next_token(&token_info);
+
+   if (token == TOKEN_REGISTER)
+   {
+      reg = registers_get_register(token_info.val);
+   }
+   else
+   {
+      /* TODO Invalid argument, raise exception. */
+
+   }
+
+   xw_stack_top = memory_get_word(stack_top);
+
+   switch (opcode)
+   {
+      case PUSH:
+         word_copy (xw_stack_top, reg);
+         /* Increment value of SP by one. */
+         word_store_integer(sp_reg, stack_top + 1);
+         break;
+
+      case POP:
+         word_copy (reg, xw_stack_top);
+         word_store_integer(sp_reg, stack_top - 1);
+         break;
+   }
+
+   return XSM_SUCCESS;
+}
