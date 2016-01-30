@@ -49,12 +49,32 @@
 
 #define XSM_INSTRUCTION_COUNT 34
 
+typedef
+struct _disk_operation
+{
+   int src_block;
+   int dest_page;
+   int operation;
+} disk_op;
+
+typedef
+struct _printer_operation
+{
+   xsm_word word;
+   int operation;
+} printer_operation;
+
 typedef 
 struct _xsm_cpu
 {
    xsm_reg *regs;
    xsm_timer_t timer;
    xsm_mode_t mode;
+   int disk_state, disk_wait;
+   int printer_state, printer_wait;
+
+   disk_operation disk_op;
+   printer_operation printer_op;
 }
 xsm_cpu;
 

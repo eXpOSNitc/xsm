@@ -554,3 +554,96 @@ machine_set_mode (int mode)
 {
    _thecpu.mode = mode;
 }
+
+int
+machine_execute_loadi ()
+{
+   int token;
+   YYSTYPE token_info;
+   int page_num;
+   int block_num;
+   xsm_word *page_base;
+
+   token = tokenize_next_token(&token_info);
+   page_num = token_info.val;
+
+   token = tokenize_next_token(&token_info);
+   block_num = token_info.val;
+
+   return machine_execute_load_do(page_num, block_num);
+}
+
+int
+machine_execute_load_do (int page_num, int block_num)
+{
+   xsm_word *page_base;
+
+   page_num = machine_translate_page (page_num);
+   page_base = memory_get_page (page_num);
+
+   return disk_read_block (page_base, block_num);
+}
+
+int
+machine_execute_encrypt ()
+{
+   int token;
+   YYSTYPE token_info;
+   xsm_word *reg;
+   xsm_word encrypted;
+
+   token = tokenize_next_token(&token_info);
+   reg = registers_get_register(token_info.str);
+
+   /* Some very easy encryption. */
+   word_encrypt (&encrypted, reg);
+
+   return XSM_SUCCESS;
+}
+
+int
+machine_execute_print_do (xsm_word *word)
+{
+   int type;
+   char *str;
+   int val;
+
+   type = word_get_unix_type (word);
+
+   if (type == XSM_TYPE_STRING)
+   {
+      str = word_get_string(word);
+      fprintf (stdout, "%s\n", str);
+   }
+   else
+   {
+      val = word_get_integer(word);
+      fprintf(stdout, "%d\n", val);
+   }
+
+   return XSM_SUCCESS;
+}
+
+int
+machine_execute_print ()
+{
+   int val;
+   int token;
+   YYSTYPE token_info;
+   xsm_word *reg;
+
+   token = tokenize_next_token(&token_info);
+   reg = registers_get_register (token_info.str);
+
+   return machine_execute_print_do(reg);
+}
+
+int
+machine_execute_in_do (xsm_word *word)
+{
+   char input[XSM_WORD_SIZE];
+
+   /*TODO: Be a bit careful here. */
+   fgets (input, XSM_WORD_SIZE, stdin);
+   return word_store_string(word, input);
+}
