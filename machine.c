@@ -416,9 +416,8 @@ int
 machine_execute_stack (int opcode)
 {
    YYSTYPE token_info;
-   xsm_word *reg;
-   xsm_word *xw_stack_top;
    int token;
+   xsm_word *reg;
 
    token = tokenize_next_token(&token_info);
 
@@ -432,22 +431,45 @@ machine_execute_stack (int opcode)
 
    }
 
-   xw_stack_top = machine_stack_pointer();
-
    switch (opcode)
    {
       case PUSH:
-         word_copy (xw_stack_top, reg);
-         /* Increment value of SP by one. */
-         word_store_integer(sp_reg, stack_top + 1);
-         break;
+         return machine_push_do(reg);
 
       case POP:
-         word_copy (reg, xw_stack_top);
-         word_store_integer(sp_reg, stack_top - 1);
-         break;
+         return machine_pop_do (reg);
    }
+}
 
+int
+machine_push_do (xsm_word *reg)
+{
+   xsm_word *xw_stack_top;
+   xsm_word *sp_reg;
+   int stack_top;
+
+   xw_stack_top = machine_stack_pointer ();
+   sp_reg = registers_get_register("SP");
+   stack_top = word_get_integer(sp_reg);
+
+   word_copy (xw_stack_top, reg);
+   word_store_integer(sp_reg, stack_top + 1);
+   return XSM_SUCCESS;
+}
+
+int
+machine_pop_do (xsm_word *dest)
+{
+   xsm_word *xw_stack_top;
+   xsm_word *sp_reg;
+   int stack_top;
+
+   xw_stack_top = machine_stack_pointer();
+   sp_reg = registers_get_register("SP");
+   stack_top = word_get_integer(sp_reg);
+
+   word_copy (reg, xw_stack_top);
+   word_store_integer(sp_reg, stack_top - 1);
    return XSM_SUCCESS;
 }
 

@@ -33,10 +33,44 @@ memory_is_address_valid (int address)
    return TRUE;
 }
 
+/* Paging hardware functions. */
 int
-memory_translate_address (int ptbr, int address)
+memory_translate_address (int ptbr, int address, int write)
 {
-   /* What ?*/
+   int page, offset;
+   int target_page;
+
+   page = address / XSM_PAGE_SIZE;
+   offset = address % XSM_PAGE_SIZE;
+
+   target_page = memory_translate_page(ptbr, page, write);
+   return target_page + offset;
+}
+
+int
+memory_translate_page (int ptbr, int page, int write)
+{
+   int page_entry, page_info;
+   xsm_word *page_entry_w, *page_info_w;
+   int entry;
+   char *info;
+
+   page_entry = page * 2 + ptbr;
+   page_info = page_entry + 1;
+
+   page_entry_w = memory_get_word (page_entry);
+   page_info_w = memory_get_word(page_entry);
+
+   entry = word_get_integer (page_entry_w);
+   info = word_get_string (page_info_w);
+
+   if (info[1] == '0')
+      machine_raise_exception ("Page fault.");
+
+   if (write && info[2] == '0')
+      machine_raise_exception ("Memory fault.");
+
+   return entry;
 }
 
 void 
