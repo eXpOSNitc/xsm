@@ -178,6 +178,34 @@ machine_execute_instruction (int opcode)
 }
 
 int
+machine_execute_unary (int opcode)
+{
+   int token;
+   YYSTYPE token_info;
+   xsm_word *arg_reg;
+   int val;
+
+   token = tokenize_next_token(&token_info);
+   arg_reg = registers_get_register(token_info.str);
+
+   val = word_get_integer(arg_reg);
+
+   switch (opcode)
+   {
+      case INR:
+         val = val + 1;
+         break;
+
+      case DCR:
+         val = val - 1;
+         break;
+   }
+
+   word_store_integer (arg_reg, val);
+   return XSM_SUCCESS;
+}
+
+int
 machine_execute_mov ()
 {
    int token;
@@ -668,4 +696,18 @@ machine_execute_in_do (xsm_word *word)
    /*TODO: Be a bit careful here. */
    fgets (input, XSM_WORD_SIZE, stdin);
    return word_store_string(word, input);
+}
+
+int
+machine_execute_iret ()
+{
+   xsm_word target;
+   xsm_word *ipreg;
+
+   machine_set_mode (XSM_MODE_USER);
+   machine_pop_do (&target);
+   
+   ipreg = registers_get_register("IP");
+   word_store_integer(ipreg, target);
+   return XSM_SUCCESS;
 }
