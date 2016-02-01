@@ -16,4 +16,12 @@
 
 #define XSM_INSTRUCTION_SIZE 2
 
+/* Disk states. */
+#define XSM_DISK_IDLE 0
+#define XSM_DISK_BUSY 1
+
+/* Console states. */
+#define XSM_CONSOLE_IDLE 0
+#define XSM_CONSOLE_BUSY 1
+
 #endif

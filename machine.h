@@ -49,6 +49,12 @@
 
 #define XSM_INSTRUCTION_COUNT 34
 
+#define XSM_DISKOP_LOAD 0
+#define XSM_DISKOP_STORE 1
+
+#define XSM_CONSOLE_PRINT 0
+#define XSM_CONSOLE_READ 1
+
 typedef
 struct _disk_operation
 {
@@ -58,11 +64,11 @@ struct _disk_operation
 } disk_op;
 
 typedef
-struct _printer_operation
+struct _console_operation
 {
    xsm_word word;
    int operation;
-} printer_operation;
+} console_operation;
 
 typedef 
 struct _xsm_cpu
@@ -71,10 +77,10 @@ struct _xsm_cpu
    xsm_timer_t timer;
    xsm_mode_t mode;
    int disk_state, disk_wait;
-   int printer_state, printer_wait;
+   int console_state, console_wait;
 
    disk_operation disk_op;
-   printer_operation printer_op;
+   console_operation console_op;
 }
 xsm_cpu;
 

@@ -6,6 +6,9 @@
 static
 xsm_cpu _thecpu;
 
+static
+xsm_options _theoptions;
+
 const char *instructions[]=
 {
    "MOV",
@@ -85,9 +88,70 @@ machine_run ()
       machine_execute_instruction (opcode);
 
       /* TODO: Post executing instruction. */
+      machine_post_execute ();
    }
 
    return TRUE;
+}
+
+void
+machine_post_execute ()
+{
+   /* Tick the timers. */
+   _thecpu.timer--;
+
+   if (_thecpu.timer == 0)
+   {
+      machine_execute_interrupt(XSM_INTERRUPT_TIMER);
+      _thecpu.timer = _theoptions.timer;
+   }
+   /* Handle the disk interrupt. */
+   if (_thecpu.disk_state == XSM_DISK_BUSY)
+   {
+      _thecpu.disk_wait--;
+
+      if (_thecpu.disk_wait == 0)
+      {
+         if (XSM_DISKOP_LOAD == _thecpu.disk_op.operation)
+         {
+            machine_execute_load_do (_thecpu.disk_op.dest_page, _thecpu.disk_op.src_block);
+            machine_execute_interrupt_do(XSM_INTERRUPT_DISK);
+         }
+         else if (XSM_DISKOP_STORE == _thecpu.disk_op.operation)
+         {
+            machine_execute_store_do (_thecpu.disk_op.dest_page, _thecpu.disk_op.src_block);
+            machine_execute_interrupt_do(XSM_INTERRUPT_DISK);
+         }
+
+         _thecpu.disk_state = XSM_DISK_IDLE;
+      }
+   }
+
+   if (XSM_CONSOLE_BUSY == _thecpu.console_state)
+   {
+      _thecpu.console_wait--;
+      if (_thecpu.console_wait == 0)
+      {
+         if (XSM_CONSOLE_PRINT == _thecpu.console_op.operation)
+         {
+            machine_execute_print_do(&_thecpu.console_op.word);
+            machine_execute_interrupt_do(XSM_INTERRUPT_CONSOLE);
+         }
+         else if (XSM_CONSOLE_READ == _thecpu.console_op.operation)
+         {
+            xsm_word *dest_port;
+            machine_execute_in_do(&_thecpu.console_op.word);
+
+            dest_port = registers_get_register ("P0");
+            word_copy (dest_port, &_thecpu.console_op.operation);
+            machine_execute_interrupt_do(XSM_INTERRUPT_CONSOLE);
+         }
+
+         _thecpu.console_state = XSM_CONSOLE_IDLE;
+      }
+   }
+
+   return;
 }
 
 int
@@ -581,6 +645,15 @@ machine_execute_interrupt()
    token = tokenize_next_token(&token_info);
 
    interrupt_num = token_info.val;
+
+   return machine_execute_interrupt_do(interrupt_num);
+}
+
+int 
+machine_execute_interrupt_do (int interrupt)
+{
+   int target;
+
    target = machine_interrupt_address (interrupt_num);
 
    machine_execute_call_do (target);
@@ -593,7 +666,7 @@ machine_execute_interrupt()
 int
 machine_interrupt_address (int int_num)
 {
-   if (int_num < 4 || int_num > 18)
+   if (int_num < 0 || int_num > 18)
       return -1; /* Not supposed to happen. */
 
    return (int_num * 2 + 4) * XSM_PAGE_SIZE;
@@ -606,7 +679,7 @@ machine_set_mode (int mode)
 }
 
 int
-machine_execute_loadi ()
+machine_execute_load (int immediate)
 {
    int token;
    YYSTYPE token_info;
@@ -620,15 +693,33 @@ machine_execute_loadi ()
    token = tokenize_next_token(&token_info);
    block_num = token_info.val;
 
-   return machine_execute_load_do(page_num, block_num);
+   if (immediate)
+      return machine_execute_load_do(page_num, block_num);
+   else
+      return machine_schedule_load (page_num, block_num, _theoptions.disk);
+}
+
+int
+machine_schedule_load (int page_num, int block_num, int firetime)
+{
+   /* If the disk is busy, just ignore the request. */
+   if (_thecpu.disk_state == XSM_DISK_BUSY)
+      return XSM_SUCCESS;
+
+   _thecpu.disk_state = XSM_DISK_BUSY;
+   _thecpu.disk_wait = firetime;
+   _thecpu.disk_op.src_block = block_num;
+   _thecpu.disk_op.dest_page = page_num;
+   _thecpu.disk_op.operation = XSM_DISKOP_LOAD;
+
+   return XSM_SUCCESS;
 }
 
 int
 machine_execute_load_do (int page_num, int block_num)
 {
    xsm_word *page_base;
-
-   page_num = machine_translate_page (page_num);
+   
    page_base = memory_get_page (page_num);
 
    return disk_read_block (page_base, block_num);
