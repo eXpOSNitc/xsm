@@ -278,7 +278,7 @@ machine_execute_instruction (int opcode)
          break;
 
       case STORE:
-         machine_execute_store ();
+         machine_execute_store (FALSE);
          break;
 
       case ENCRYPT:
@@ -791,7 +791,7 @@ machine_set_mode (int mode)
 }
 
 int
-machine_execute_load (int immediate)
+machine_execute_disk (int operation, int immediate)
 {
    int token;
    YYSTYPE token_info;
@@ -806,13 +806,27 @@ machine_execute_load (int immediate)
    block_num = token_info.val;
 
    if (immediate)
-      return machine_execute_load_do(page_num, block_num);
+   {
+      if (operation == XSM_DISKOP_LOAD)
+         machine_execute_load_do(page_num, block_num);
+      else if (XSM_DISKOP_STORE == operation)
+         machine_execute_store_do(page_num, block_num);
+   }
    else
-      return machine_schedule_load (page_num, block_num, _theoptions.disk);
+      return machine_schedule_disk (page_num, block_num, _theoptions.disk, operation);
 }
 
 int
-machine_schedule_load (int page_num, int block_num, int firetime)
+machine_execute_store_do (int page_num, int block_num)
+{
+   xsm_word *page_base;
+
+   page_base = memory_get_page(page_num);
+   return disk_write_page (page_num, block_num);
+}
+
+int
+machine_schedule_disk (int page_num, int block_num, int firetime, int operation)
 {
    /* If the disk is busy, just ignore the request. */
    if (_thecpu.disk_state == XSM_DISK_BUSY)
@@ -822,7 +836,7 @@ machine_schedule_load (int page_num, int block_num, int firetime)
    _thecpu.disk_wait = firetime;
    _thecpu.disk_op.src_block = block_num;
    _thecpu.disk_op.dest_page = page_num;
-   _thecpu.disk_op.operation = XSM_DISKOP_LOAD;
+   _thecpu.disk_op.operation = operation;
 
    return XSM_SUCCESS;
 }
