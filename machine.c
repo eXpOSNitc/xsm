@@ -70,6 +70,7 @@ machine_get_opcode (const char* instr)
    return XSM_ILLINSTR;
 }
 
+/* When the lexer calls, serve him with the instruction to execute. */
 int
 machine_serve_instruction (char *buffer, int *read_bytes, int max)
 {
@@ -105,6 +106,12 @@ xsm_word *
 machine_get_ipreg ()
 {
    return registers_get_register("IP");
+}
+
+xsm_word *
+machine_get_spreg ()
+{
+   return registers_get_register("SP");
 }
 
 int
