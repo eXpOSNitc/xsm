@@ -71,6 +71,43 @@ machine_get_opcode (const char* instr)
 }
 
 int
+machine_serve_instruction (char *buffer, int *read_bytes, int max)
+{
+   int ip_val, i;
+   xsm_word *ip_reg;
+   int bytes_to_read;
+   xsm_word *instr_mem;
+
+   bytes_to_read = XSM_INSTRUCTION_SIZE * XSM_WORD_SIZE;
+
+   ip_reg = machine_get_ipreg();
+   ip_val = word_get_integer(ip_reg);
+
+   ip_val = machine_translate_address(ip_val);
+   instr_mem = memory_get_word(ip_val);
+
+   memcpy (buffer, instr_mem, bytes_to_read);
+
+   /* Trim. */
+   for (i = 0; i < bytes_to_read; ++i)
+   {
+      if (buffer[i] == '\0')
+         buffer[i] = ' ';
+   }
+
+   buffer[bytes_to_read - 1] = '\0';
+   *read_bytes = bytes_to_read;
+
+   return TRUE;
+}
+
+xsm_word *
+machine_get_ipreg ()
+{
+   return registers_get_register("IP");
+}
+
+int
 machine_run ()
 {
    int token, opcode;
