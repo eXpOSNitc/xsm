@@ -119,14 +119,26 @@ machine_run ()
 {
    int token, opcode;
    YYSTYPE token_info;
+   xsm_word *ipreg;
+   int ipval;
+
+   ipreg = machine_get_ipreg ();
 
    while (TRUE){
+      /* Flush the instruction stream. */
+      tokenize_clear_stream ();
+
       token = tokenize_next_token (&token_info);
 
       if (token != TOKEN_INSTRUCTION)
       {
          machine_raise_exception ("The simulator has encountered an illegal instruction.");
       }
+
+      /* IP = IP + instruction length. */
+      ipval = word_get_integer(ipreg);
+      ipval = ipval + XSM_INSTRUCTION_SIZE;
+      word_store_integer (ipreg, ipval);
 
       opcode = machine_get_opcode(yylval.str);
       machine_execute_instruction (opcode);
@@ -280,6 +292,10 @@ machine_execute_instruction (int opcode)
       case RESTORE:
          machine_execute_restore ();
          break;
+
+      case HALT:
+         printf ("System halted.\n");
+         return TRUE;
    }
 
    return TRUE;
@@ -642,6 +658,58 @@ machine_execute_call_do (int target)
    word_store_integer(spreg, curr_sp + 1);
 
    word_store_integer (ipreg, target);
+   return XSM_SUCCESS;
+}
+
+int
+machine_execute_backup()
+{
+   xsm_word *reg;
+   int ireg;
+   char str_reg[5];
+
+   reg = registers_get_register("BP");
+   machine_execute_push_do (reg);
+
+   reg = registers_get_register("PTBR");
+   machine_execute_push_do (reg);
+
+   reg = registers_get_register("PTLR");
+   machine_execute_push_do (reg);
+
+   for (ireg = 0; ireg < 19; ++ireg)
+   {
+      sprintf (str_reg, "R%d", ireg);
+      reg = registers_get_register(str_reg);
+      machine_execute_push_do(reg);
+   }
+
+   return XSM_SUCCESS;
+}
+
+int
+machine_execute_restore ()
+{
+   xsm_word *reg;
+   int ireg;
+   char str_reg[5];
+
+   for (ireg = 19; ireg >= 0; ireg--)
+   {
+      sprintf (str_reg, "R%d", ireg);
+      reg = registers_get_register(str_reg);
+      machine_execute_pop_do (reg);
+   }
+
+   reg = registers_get_register ("PTLR");
+   machine_execute_pop_do (reg);
+
+   reg = registers_get_register ("PTBR");
+   machine_execute_pop_do (reg);
+
+   reg = registers_get_register ("BP");
+   machine_execute_pop_do (reg);
+
    return XSM_SUCCESS;
 }
 

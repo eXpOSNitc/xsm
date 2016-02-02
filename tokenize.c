@@ -59,3 +59,9 @@ tokenize_close ()
 	/* Nothing to do. */
 	return XSM_SUCCESS;
 }
+
+void
+tokenize_clear_stream ()
+{
+	YY_FLUSH_BUFFER;
+}
