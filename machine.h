@@ -130,4 +130,115 @@ struct _xsm_operand
 }
 xsm_operand;
 
+int
+machine_init (xsm_options *options);
+
+int
+machine_get_opcode (const char* instr);
+
+int
+machine_serve_instruction (char *buffer, int *read_bytes, int max);
+
+xsm_word *
+machine_get_ipreg ();
+
+xsm_word *
+machine_get_spreg ();
+
+int
+machine_run ();
+
+void
+machine_post_execute ();
+
+int
+machine_execute_instruction (int opcode);
+
+int
+machine_execute_unary (int opcode);
+
+int
+machine_execute_mov ();
+
+xsm_word*
+machine_get_address ();
+
+int
+machine_translate_address (int address);
+
+int
+machine_execute_arith (int opcode);
+
+int
+machine_execute_jump (int opcode);
+
+int
+machine_execute_stack (int opcode);
+
+int
+machine_push_do (xsm_word *reg);
+
+int
+machine_pop_do (xsm_word *dest);
+
+xsm_word*
+machine_stack_pointer ();
+
+int
+machine_execute_call_do (int target);
+
+int
+machine_execute_backup();
+
+int
+machine_execute_restore ();
+
+int
+machine_execute_call ();
+
+int
+machine_execute_ret ();
+
+int
+machine_execute_interrupt();
+
+int 
+machine_execute_interrupt_do (int interrupt);
+
+int
+machine_interrupt_address (int int_num);
+
+void
+machine_set_mode (int mode);
+
+int
+machine_execute_disk (int operation, int immediate);
+
+int
+machine_execute_store_do (int page_num, int block_num);
+
+int
+machine_schedule_disk (int page_num, int block_num, int firetime, int operation);
+
+int
+machine_execute_load_do (int page_num, int block_num);
+
+int
+machine_execute_encrypt ();
+
+int
+machine_execute_print_do (xsm_word *word);
+
+int
+machine_execute_print ();
+
+int
+machine_execute_in_do (xsm_word *word);
+
+int
+machine_execute_iret ();
+
+void
+machine_destroy ();
+
 #endif

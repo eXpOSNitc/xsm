@@ -50,10 +50,27 @@ const char *instructions[]=
 };
 
 int
-machine_init ()
+machine_init (xsm_options *options)
 {
-   /* TODO :Add initialization code here. */
-   
+   xsm_word *ipreg;
+
+   _theoptions = *options;
+
+   /* Set up the registers. */
+   if (!registers_init ())
+      return XSM_FAILURE;
+
+   if (!memory_init())
+      return XSM_FAILURE;
+
+   /* Load the boot code onto the memory.. */
+   disk_read_block (0, 0);
+
+   /* Set up IP.. */
+   ipreg = machine_get_ipreg ();
+   word_store_integer(ipreg, 0);
+
+   return XSM_SUCCESS;
 }
 
 int
@@ -927,4 +944,12 @@ machine_execute_iret ()
    ipreg = registers_get_register("IP");
    word_store_integer(ipreg, target);
    return XSM_SUCCESS;
+}
+
+void
+machine_destroy ()
+{
+   /* Demolish. */
+   memory_destroy ();
+   registers_destroy();
 }
