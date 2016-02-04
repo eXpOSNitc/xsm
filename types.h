@@ -12,7 +12,7 @@
 typedef
 struct _xsm_word
 {
-   char val[XSM_WORDSIZE];
+   char val[XSM_WORD_SIZE];
 }
 xsm_word;
 

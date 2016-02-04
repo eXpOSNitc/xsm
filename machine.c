@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "machine.h"
 #include "tokenize.h"
 
@@ -278,8 +279,8 @@ machine_execute_instruction (int opcode)
          machine_execute_ret ();
          break;
 
-      case BKRP:
-         machine_execute_bkrp ();
+      case BRKP:
+         machine_execute_brkp ();
          break;
 
       case INT:
@@ -316,6 +317,13 @@ machine_execute_instruction (int opcode)
    }
 
    return TRUE;
+}
+
+int
+machine_execute_brkp ()
+{
+   /* TODO: Initiate debugger. */
+   return XSM_SUCCESS;
 }
 
 int

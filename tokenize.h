@@ -3,4 +3,21 @@
 #define _XSM_TOKENIZE_H
 
 /* Include lexer header. */
+#include "lexer.h"
+
+int
+tokenize_init ();
+
+int
+tokenize_next_token (YYSTYPE *token_info);
+
+int
+tokenize_peek (YYSTYPE *token_info);
+
+int
+tokenize_close ();
+
+void
+tokenize_clear_stream ();
+
 #endif

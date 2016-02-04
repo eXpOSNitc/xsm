@@ -3,6 +3,9 @@
 #define XSM_MACHINE_H
 
 #include "types.h"
+#include "registers.h"
+#include "memory.h"
+#include "disk.h"
 
 #define XSM_ADDR_DREF 0
 #define XSM_ADDR_NODREF 1
@@ -61,7 +64,7 @@ struct _disk_operation
    int src_block;
    int dest_page;
    int operation;
-} disk_op;
+} disk_operation;
 
 typedef
 struct _console_operation
@@ -74,8 +77,8 @@ typedef
 struct _xsm_cpu
 {
    xsm_reg *regs;
-   xsm_timer_t timer;
-   xsm_mode_t mode;
+   int timer;
+   int mode;
    int disk_state, disk_wait;
    int console_state, console_wait;
 
@@ -83,14 +86,6 @@ struct _xsm_cpu
    console_operation console_op;
 }
 xsm_cpu;
-
-typedef
-struct _xsm_mem
-{
-   xsm_page *pages;
-   int num_pages;
-}
-xsm_mem;
 
 typedef
 struct _xsm_options

@@ -2,7 +2,7 @@
    /* Include files. */
    #include <stdlib.h>
    #include "machine.h"
-}
+   #include "lexer.h"
 %}
 %%
 
@@ -12,7 +12,7 @@
 }
 
 \"[^"]* {
-   yylval.str = strdup(yytext);
+   yylval.str = yytext;
    return TOKEN_STRING;
 }
 
@@ -28,53 +28,22 @@
    return TOKEN_DREF_R;
 }
 
-SP {
-   return TOKEN_SP;
-}
-
-BP {
-   return TOKEN_BP;
-}
-
-IP {
-   return TOKEN_IP;
-}
-
-PTBR {
-   return TOKEN_PTBR;
-}
-
-PTLR {
-   return TOKEN_PTLR;
-}
-
-EIP {
-   return TOKEN_EIP;
-}
-
-EC {
-   return TOKEN_EC;
-}
-
-EPN {
-   return TOKEN_EPN;
-}
-
-EMA {
-   return TOKEN_EMA;
+SP|BP|IP|PTBR|PTLR|EIP|EC|EPN|EMA {
+   yylval.str = yytext;
+   return TOKEN_REGISTER;
 }
 
 P[0-3] {
-   yylval.str = strdup(yytext);
-   return TOKEN_PORT;
+   yylval.str = yytext;
+   return TOKEN_REGISTER;
 }
 
 R[0-9]+ {
-   yylval.str = strdup(yytext);
+   yylval.str = yytext;
    return TOKEN_REGISTER;
 }
 
 [a-zA-Z] {
-   yylval.str = strdup(yytext);
+   yylval.str = yytext;
    return TOKEN_INSTRUCTION;
 }

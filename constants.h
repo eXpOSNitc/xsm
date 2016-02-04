@@ -1,6 +1,8 @@
 #ifndef _XSM_CONSTANTS_H
 
-#define XSM_CONSTANTS_H
+#define _XSM_CONSTANTS_H
+
+#include <stdbool.h>
 
 #define XSM_WORD_SIZE 16
 #define XSM_MEMORY_NUMPAGES 128

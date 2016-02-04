@@ -45,4 +45,16 @@ typedef
 xsm_word
 xsm_reg;
 
+int
+registers_init ();
+
+xsm_reg*
+registers_get_register (const char *name);
+
+xsm_reg*
+registers_zero_register ();
+
+void
+registers_destroy();
+
 #endif
