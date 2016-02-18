@@ -150,6 +150,9 @@ int
 machine_execute_instruction (int opcode);
 
 int
+machine_execute_brkp ();
+
+int
 machine_execute_unary (int opcode);
 
 int

@@ -81,7 +81,7 @@ machine_get_opcode (const char* instr)
    
    for (i = 0; i < XSM_INSTRUCTION_COUNT; ++i)
    {
-      if (!stricmp(instr, instructions[i])
+      if (!strcasecmp(instr, instructions[i]))
          return i;
    }
    

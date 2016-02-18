@@ -26,4 +26,12 @@
 #define XSM_CONSOLE_IDLE 0
 #define XSM_CONSOLE_BUSY 1
 
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 #endif
