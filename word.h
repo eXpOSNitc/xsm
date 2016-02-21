@@ -2,6 +2,8 @@
 
 #define _XSM_WORD_H
 
+#include "types.h"
+
 int
 word_get_integer (xsm_word* word);
 
@@ -19,5 +21,8 @@ word_store_string (xsm_word *word, const char *str);
 
 void
 word_copy (xsm_word* dest, xsm_word *src);
+
+void
+word_encrypt(xsm_word *word);
 
 #endif

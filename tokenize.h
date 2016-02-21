@@ -20,4 +20,8 @@ tokenize_close ();
 void
 tokenize_clear_stream ();
 
+/* Clang rigorously follows C99 standard. */
+int
+yylex();
+
 #endif

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "machine.h"
 #include "tokenize.h"
+#include "exception.h"
 
 static
 xsm_cpu _thecpu;
@@ -102,7 +103,7 @@ machine_serve_instruction (char *buffer, int *read_bytes, int max)
    ip_reg = machine_get_ipreg();
    ip_val = word_get_integer(ip_reg);
 
-   ip_val = machine_translate_address(ip_val);
+   ip_val = machine_translate_address(ip_val, FALSE);
    instr_mem = memory_get_word(ip_val);
 
    memcpy (buffer, instr_mem, bytes_to_read);
@@ -150,7 +151,7 @@ machine_run ()
 
       if (token != TOKEN_INSTRUCTION)
       {
-         machine_raise_exception ("The simulator has encountered an illegal instruction.");
+         exception_raise (0, "The simulator has encountered an illegal instruction.");
       }
 
       /* IP = IP + instruction length. */
@@ -158,7 +159,7 @@ machine_run ()
       ipval = ipval + XSM_INSTRUCTION_SIZE;
       word_store_integer (ipreg, ipval);
 
-      opcode = machine_get_opcode(yylval.str);
+      opcode = machine_get_opcode(token_info.str);
       machine_execute_instruction (opcode);
 
       /* TODO: Post executing instruction. */
@@ -217,7 +218,7 @@ machine_post_execute ()
             machine_execute_in_do(&_thecpu.console_op.word);
 
             dest_port = registers_get_register ("P0");
-            word_copy (dest_port, &_thecpu.console_op.operation);
+            word_copy (dest_port, &_thecpu.console_op.word);
             machine_execute_interrupt_do(XSM_INTERRUPT_CONSOLE);
          }
 
@@ -288,15 +289,15 @@ machine_execute_instruction (int opcode)
          break;
 
       case LOAD:
-         machine_execute_load ();
+         machine_execute_disk (XSM_DISKOP_LOAD, TRUE);
          break;
 
       case LOADI:
-         machine_execute_loadi ();
+         machine_execute_disk (XSM_DISKOP_LOAD, FALSE);
          break;
 
       case STORE:
-         machine_execute_store (FALSE);
+         machine_execute_disk (XSM_DISKOP_STORE, FALSE);
          break;
 
       case ENCRYPT:
@@ -317,6 +318,58 @@ machine_execute_instruction (int opcode)
    }
 
    return TRUE;
+}
+
+int
+machine_execute_logical (int opcode)
+{
+   xsm_word *dest_reg, *src_left_reg, *src_right_reg;
+   int token;
+   YYSTYPE token_info;
+   int result, val_left, val_right;
+
+   /* TODO: Sure about this order? */
+   token = tokenize_next_token(&token_info);
+   dest_reg = registers_get_register(token_info.str);
+
+   token = tokenize_next_token(&token_info);
+   src_left_reg = registers_get_register(token_info.str);
+
+   token = tokenize_next_token(&token_info);
+   src_right_reg = registers_get_register(token_info.str);
+
+   val_left = word_get_integer(src_left_reg);
+   val_right = word_get_integer(src_right_reg);
+
+   switch(opcode)
+   {
+      case LT:
+         result = val_left < val_right ? 1 : 0;
+         break;
+
+      case GT:
+         result = val_left > val_right ? 1 : 0;
+         break;
+
+      case EQ:
+         result = val_left == val_right ? 1 : 0;
+         break;
+
+      case NE:
+         result = val_left != val_right ? 1 : 0;
+         break;
+
+      case GE:
+         result = val_left >= val_right ? 1 : 0;
+         break;
+
+      case LE:
+         result = val_left <= val_right ? 1 : 0;
+         break;
+   }
+
+   word_store_integer(dest_reg, result);
+   return XSM_SUCCESS;
 }
 
 int
@@ -366,26 +419,26 @@ machine_execute_mov ()
    switch (token)
    {
       case TOKEN_DREF_L:
-         l_address = machine_get_address ();
+         l_address = machine_get_address (TRUE);
          break;
 
       case TOKEN_REGISTER:
-         l_address = registers_get_register (yylval.str);
+         l_address = registers_get_register (token_info.str);
          token = tokenize_next_token (&token_info);
          break;
    }
 
-   if (!address)
+   if (!l_address)
    {
-      machine_raise_exception("Error in calculating the target address.");
-      return;
+      exception_raise(0, "Error in calculating the target address.");
+      return XSM_FAILURE;
    }
 
    token = tokenize_next_token(&token_info);
 
    if (token != TOKEN_COMMA)
    {
-      machine_raise_exception ("Malformed instruction.");
+      exception_raise (0, "Malformed instruction.");
       return XSM_FAILURE;
    }
 
@@ -394,35 +447,35 @@ machine_execute_mov ()
    switch (token)
    {
       case TOKEN_DREF_L:
-         r_address = machine_get_address ();
-         word_copy (l_adress, r_address);
+         r_address = machine_get_address (FALSE);
+         word_copy (l_address, r_address);
          break;
 
       case TOKEN_REGISTER:
-         r_address = registers_get_register(yylval.str);
+         r_address = registers_get_register(token_info.str);
          word_copy (l_address, r_address);
          tokenize_next_token(&token_info);
          break;
 
       case TOKEN_NUMBER:
-         word_store_integer (l_address, atoi(yylval.val));
+         word_store_integer (l_address, atoi(token_info.str));
          tokenize_next_token(&token_info);
          break;
 
       case TOKEN_STRING:
-         word_store_string (l_address, yylval.str);
+         word_store_string (l_address, token_info.str);
          tokenize_next_token(&token_info);
          break;
 
       default:
-         /* Nothing to do. */
+         ; /* Nothing to do. */
    }
 
    return XSM_SUCCESS;
 }
 
 xsm_word*
-machine_get_address ()
+machine_get_address (int write)
 {
    int token, address;
    YYSTYPE token_info;
@@ -446,7 +499,7 @@ machine_get_address ()
 
       default:
          /* Mark him. */
-         machine_raise_exception ("Invalid memory derefence.");
+         exception_raise (0, "Invalid memory derefence.");
    }
 
    /* Next one is a bracket, neglect. */
@@ -471,28 +524,28 @@ machine_get_address ()
    }
 
    /* Ask the MMU to translate the address for us. */
-   address = machine_translate_address (address);
+   address = machine_translate_address (address, write);
 
    return memory_get_word(address);
 }
 
 int
-machine_translate_address (int address)
+machine_translate_address (int address, int write)
 {
    int ptbr;
 
-   if (_thecpu->mode == XSM_MODE_KERNEL)
+   if (_thecpu.mode == PRIVILEGE_KERNEL)
       return address;
 
    /* User mode, ask the MMU to translate. */
    ptbr = word_get_integer (registers_get_register("PTBR"));
-   return memory_translate_address (ptbr, address);
+   return memory_translate_address (ptbr, address, write);
 }
 
 int
 machine_execute_arith (int opcode)
 {
-   int result;
+   int result, token;
    xsm_reg *l_operand, *r_operand;
    YYSTYPE token_info;
    int l_value, r_value;
@@ -500,7 +553,7 @@ machine_execute_arith (int opcode)
    token = tokenize_next_token(&token_info);
 
    if (token != TOKEN_REGISTER)
-      machine_raise_exception ("Wrong operand.");
+      exception_raise (0, "Wrong operand.");
 
    l_operand = registers_get_register(token_info.str);
    l_value = word_get_integer(l_operand);
@@ -574,7 +627,7 @@ machine_execute_jump (int opcode)
    if (JZ == opcode)
       test = !test;
 
-   target = machine_translate_address (target);
+   target = machine_translate_address (target, FALSE);
 
    if (test)
    {
@@ -616,6 +669,8 @@ machine_execute_stack (int opcode)
       case POP:
          return machine_pop_do (reg);
    }
+
+   return XSM_SUCCESS;
 }
 
 int
@@ -625,7 +680,7 @@ machine_push_do (xsm_word *reg)
    xsm_word *sp_reg;
    int stack_top;
 
-   xw_stack_top = machine_stack_pointer ();
+   xw_stack_top = machine_stack_pointer (FALSE);
    sp_reg = registers_get_register("SP");
    stack_top = word_get_integer(sp_reg);
 
@@ -641,17 +696,17 @@ machine_pop_do (xsm_word *dest)
    xsm_word *sp_reg;
    int stack_top;
 
-   xw_stack_top = machine_stack_pointer();
+   xw_stack_top = machine_stack_pointer(TRUE);
    sp_reg = registers_get_register("SP");
    stack_top = word_get_integer(sp_reg);
 
-   word_copy (reg, xw_stack_top);
+   word_copy (dest, xw_stack_top);
    word_store_integer(sp_reg, stack_top - 1);
    return XSM_SUCCESS;
 }
 
 xsm_word*
-machine_stack_pointer ()
+machine_stack_pointer (int write)
 {
    xsm_word *sp_reg;
    int stack_top;
@@ -659,7 +714,7 @@ machine_stack_pointer ()
    sp_reg = registers_get_register ("SP");
    stack_top = word_get_integer(sp_reg);
 
-   stack_top = machine_translate_address (stack_top);
+   stack_top = machine_translate_address (stack_top, write);
 
    return memory_get_word(stack_top);
 }
@@ -667,7 +722,7 @@ machine_stack_pointer ()
 int
 machine_execute_call_do (int target)
 {
-   int target, curr_ip, curr_sp;
+   int curr_ip, curr_sp;
    xsm_word *ipreg;
    xsm_word *stack_pointer;
    xsm_word *spreg;
@@ -675,7 +730,7 @@ machine_execute_call_do (int target)
    ipreg = registers_get_register("IP");
    curr_ip = word_get_integer(ipreg);
 
-   stack_pointer = machine_stack_pointer ();
+   stack_pointer = machine_stack_pointer (TRUE);
    word_store_integer(stack_pointer, curr_ip + XSM_INSTRUCTION_SIZE);
 
    spreg = registers_get_register("SP");
@@ -694,19 +749,19 @@ machine_execute_backup()
    char str_reg[5];
 
    reg = registers_get_register("BP");
-   machine_execute_push_do (reg);
+   machine_push_do (reg);
 
    reg = registers_get_register("PTBR");
-   machine_execute_push_do (reg);
+   machine_push_do (reg);
 
    reg = registers_get_register("PTLR");
-   machine_execute_push_do (reg);
+   machine_push_do (reg);
 
    for (ireg = 0; ireg < 19; ++ireg)
    {
       sprintf (str_reg, "R%d", ireg);
       reg = registers_get_register(str_reg);
-      machine_execute_push_do(reg);
+      machine_push_do(reg);
    }
 
    return XSM_SUCCESS;
@@ -723,17 +778,17 @@ machine_execute_restore ()
    {
       sprintf (str_reg, "R%d", ireg);
       reg = registers_get_register(str_reg);
-      machine_execute_pop_do (reg);
+      machine_pop_do (reg);
    }
 
    reg = registers_get_register ("PTLR");
-   machine_execute_pop_do (reg);
+   machine_pop_do (reg);
 
    reg = registers_get_register ("PTBR");
-   machine_execute_pop_do (reg);
+   machine_pop_do (reg);
 
    reg = registers_get_register ("BP");
-   machine_execute_pop_do (reg);
+   machine_pop_do (reg);
 
    return XSM_SUCCESS;
 }
@@ -747,7 +802,7 @@ machine_execute_call ()
    token = tokenize_next_token(&token_info);
    target = token_info.val;
 
-   machine_execute_call_do (target);
+   return machine_execute_call_do (target);
 }
 
 int
@@ -759,7 +814,7 @@ machine_execute_ret ()
    int curr_sp;
 
    spreg = registers_get_register ("SP");
-   stack_pointer = machine_stack_pointer ();
+   stack_pointer = machine_stack_pointer (TRUE);
    target = word_get_integer(stack_pointer);
 
    curr_sp = word_get_integer (spreg);
@@ -791,12 +846,12 @@ machine_execute_interrupt_do (int interrupt)
 {
    int target;
 
-   target = machine_interrupt_address (interrupt_num);
+   target = machine_interrupt_address (interrupt);
 
    machine_execute_call_do (target);
 
    /* Change the mode now, that will do. */
-   machine_set_mode (XSM_MODE_KERNEL);
+   machine_set_mode (PRIVILEGE_KERNEL);
    return XSM_SUCCESS;
 }
 
@@ -833,12 +888,14 @@ machine_execute_disk (int operation, int immediate)
    if (immediate)
    {
       if (operation == XSM_DISKOP_LOAD)
-         machine_execute_load_do(page_num, block_num);
+         return machine_execute_load_do(page_num, block_num);
       else if (XSM_DISKOP_STORE == operation)
-         machine_execute_store_do(page_num, block_num);
+         return machine_execute_store_do(page_num, block_num);
    }
    else
       return machine_schedule_disk (page_num, block_num, _theoptions.disk, operation);
+
+   return XSM_SUCCESS;
 }
 
 int
@@ -847,7 +904,7 @@ machine_execute_store_do (int page_num, int block_num)
    xsm_word *page_base;
 
    page_base = memory_get_page(page_num);
-   return disk_write_page (page_num, block_num);
+   return disk_write_page (page_base, block_num);
 }
 
 int
@@ -882,13 +939,12 @@ machine_execute_encrypt ()
    int token;
    YYSTYPE token_info;
    xsm_word *reg;
-   xsm_word encrypted;
 
    token = tokenize_next_token(&token_info);
    reg = registers_get_register(token_info.str);
 
    /* Some very easy encryption. */
-   word_encrypt (&encrypted, reg);
+   word_encrypt (reg);
 
    return XSM_SUCCESS;
 }
@@ -946,11 +1002,11 @@ machine_execute_iret ()
    xsm_word target;
    xsm_word *ipreg;
 
-   machine_set_mode (XSM_MODE_USER);
+   machine_set_mode (PRIVILEGE_USER);
    machine_pop_do (&target);
    
    ipreg = registers_get_register("IP");
-   word_store_integer(ipreg, target);
+   word_copy(ipreg, &target);
    return XSM_SUCCESS;
 }
 

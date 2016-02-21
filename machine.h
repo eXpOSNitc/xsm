@@ -150,6 +150,9 @@ int
 machine_execute_instruction (int opcode);
 
 int
+machine_execute_logical (int opcode);
+
+int
 machine_execute_brkp ();
 
 int
@@ -159,10 +162,10 @@ int
 machine_execute_mov ();
 
 xsm_word*
-machine_get_address ();
+machine_get_address (int write);
 
 int
-machine_translate_address (int address);
+machine_translate_address (int address, int write);
 
 int
 machine_execute_arith (int opcode);
@@ -180,7 +183,7 @@ int
 machine_pop_do (xsm_word *dest);
 
 xsm_word*
-machine_stack_pointer ();
+machine_stack_pointer (int write);
 
 int
 machine_execute_call_do (int target);
@@ -238,5 +241,8 @@ machine_execute_iret ();
 
 void
 machine_destroy ();
+
+void
+machine_raise_exception (const char *exp);
 
 #endif

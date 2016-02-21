@@ -1,6 +1,9 @@
 #include "word.h"
 
 #include <stdlib.h>
+#include <string.h>
+#include <memory.h>
+#include <stdio.h>
 
 /* Utility functions. An interface between UNIX and XSM data types. */
 
@@ -57,11 +60,29 @@ word_store_string (xsm_word *word, const char *str)
 
 	data = word->val;
 
-	return strncpy (data, str, XSM_WORD_SIZE);
+	strncpy (data, str, XSM_WORD_SIZE);
+	return XSM_WORD_SIZE;
 }
 
 void
 word_copy (xsm_word *dest, xsm_word *src)
 {
 	memcpy (dest, src, sizeof(xsm_word));
+}
+
+void
+word_encrypt(xsm_word *word)
+{
+	/* Blah blah */
+	int i, result;
+	char *data = (char *)word;
+
+	result = 0;
+
+	for (i = 0; i < XSM_WORD_SIZE; ++i)
+	{
+		result = result + data[i];
+	}
+
+	word_store_integer(word, result);
 }

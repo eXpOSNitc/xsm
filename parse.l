@@ -3,6 +3,8 @@
    #include <stdlib.h>
    #include "machine.h"
    #include "lexer.h"
+
+   YYSTYPE yylval;
 %}
 %%
 

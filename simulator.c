@@ -16,7 +16,7 @@ simulator_run ()
 	disk_init (XSM_DEFAULT_DISK);
 
 	/* On your marks! */
-	if (!machine_init (_options))
+	if (!machine_init (&_options))
 		return XSM_FAILURE;
 
 	/* Fire! */

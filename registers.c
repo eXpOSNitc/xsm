@@ -1,3 +1,9 @@
+#include "registers.h"
+#include "word.h"
+
+#include <stdlib.h>
+#include <string.h>
+
 static
 xsm_reg *_registers;
 
@@ -51,13 +57,13 @@ registers_init ()
    _registers = (xsm_reg *) malloc (sizeof(xsm_reg) * XSM_NUM_REG);
    
    if (!_registers)
-      return XSM_FAILED;
+      return XSM_FAILURE;
       
    /* The zero register. */
    _zero_register = (xsm_reg *) malloc (sizeof(xsm_reg));
    
    if (!_zero_register)
-      return XSM_FAILED;
+      return XSM_FAILURE;
    
    word_store_integer (_zero_register, 0);
       
@@ -71,8 +77,8 @@ registers_get_register (const char *name)
    
    for (i = 0; i < XSM_NUM_REG; ++i)
    {
-      if (!stricmp(name, _register_names[i]))
-         return registers[i];
+      if (!strcasecmp(name, _register_names[i]))
+         return &_registers[i];
    }
    
    return NULL;

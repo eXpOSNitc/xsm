@@ -1,6 +1,8 @@
 #include "disk.h"
 
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 static
 xsm_word *_disk_mem_copy;
@@ -50,7 +52,9 @@ disk_write_page (xsm_word *page, int block_num)
 	xsm_word *block;
 
 	block = disk_get_block (block_num);
-	return memcpy (block, page, XSM_PAGE_SIZE * XSM_WORD_SIZE);
+	memcpy (block, page, XSM_PAGE_SIZE * XSM_WORD_SIZE);
+
+	return TRUE;
 }
 
 xsm_word*
@@ -60,7 +64,7 @@ disk_get_block (int block)
 	size_t offset;
 
 	addr = (char *) _disk_mem_copy;
-	offset = addr + block * XSM_DISK_BLOCK_SIZE * XSM_WORD_SIZE;
+	offset = block * XSM_DISK_BLOCK_SIZE * XSM_WORD_SIZE;
 
 	block_base = addr + offset;
 
@@ -73,7 +77,8 @@ disk_read_block (xsm_word *page, int block_num)
 	xsm_word *block;
 
 	block = disk_get_block (block_num);
-	return memcpy(page, block, XSM_PAGE_SIZE * XSM_WORD_SIZE);
+	memcpy(page, block, XSM_PAGE_SIZE * XSM_WORD_SIZE);
+	return TRUE;
 }
 
 int

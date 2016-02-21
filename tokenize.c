@@ -1,4 +1,5 @@
 #include "tokenize.h"
+#include "types.h"
 
 static
 YYSTYPE _curr_token;
@@ -17,7 +18,7 @@ tokenize_init ()
 }
 
 int
-tokenize_next_token (YYSTYPE &token_info)
+tokenize_next_token (YYSTYPE *token_info)
 {
 	int token_type;
 
@@ -36,7 +37,7 @@ tokenize_next_token (YYSTYPE &token_info)
 }
 
 int
-tokenize_peek (YYSTYPE &token_info)
+tokenize_peek (YYSTYPE *token_info)
 {
 	if (_la_exists)
 	{
@@ -63,5 +64,5 @@ tokenize_close ()
 void
 tokenize_clear_stream ()
 {
-	YY_FLUSH_BUFFER;
+	//YY_FLUSH_BUFFER;
 }

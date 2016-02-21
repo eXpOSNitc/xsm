@@ -34,4 +34,10 @@
 #define FALSE 0
 #endif
 
+/* Interrupts */
+#define XSM_INTERRUPT_EXCEPTION 0
+#define XSM_INTERRUPT_TIMER 1
+#define XSM_INTERRUPT_DISK 2
+#define XSM_INTERRUPT_CONSOLE 3
+
 #endif

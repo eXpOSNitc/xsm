@@ -1,4 +1,5 @@
 #include "memory.h"
+#include "exception.h"
 #include <stdlib.h>
 
 static
@@ -11,7 +12,7 @@ memory_init ()
    _xsm_mem = (xsm_word *) malloc (sizeof(xsm_word) * XSM_MEMORY_SIZE);
    
    if (!_xsm_mem)
-      return XSM_FAILED;
+      return XSM_FAILURE;
       
    return XSM_SUCCESS;
 }
@@ -47,6 +48,12 @@ memory_translate_address (int ptbr, int address, int write)
    return target_page + offset;
 }
 
+xsm_word*
+memory_get_page (int page)
+{
+   return memory_get_word (page * XSM_PAGE_SIZE);
+}
+
 int
 memory_translate_page (int ptbr, int page, int write)
 {
@@ -65,10 +72,10 @@ memory_translate_page (int ptbr, int page, int write)
    info = word_get_string (page_info_w);
 
    if (info[1] == '0')
-      machine_raise_exception ("Page fault.");
+      exception_raise (0, "Page fault.");
 
    if (write && info[2] == '0')
-      machine_raise_exception ("Memory fault.");
+      exception_raise (0, "Memory fault.");
 
    return entry;
 }
