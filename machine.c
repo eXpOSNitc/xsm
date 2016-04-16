@@ -133,6 +133,13 @@ machine_get_spreg ()
    return registers_get_register("SP");
 }
 
+void
+machine_pre_execute()
+{
+   /* Clear the potential watchpoint trigger. */
+   _thecpu.mem_write_addr = -1;
+}
+
 int
 machine_run ()
 {
@@ -146,6 +153,8 @@ machine_run ()
    while (TRUE){
       /* Flush the instruction stream. */
       tokenize_clear_stream ();
+
+      machine_pre_execute ();
 
       token = tokenize_next_token (&token_info);
 
@@ -410,7 +419,7 @@ machine_execute_unary (int opcode)
 int
 machine_execute_mov ()
 {
-   int token;
+   int token, mem_write_addr;
    xsm_word *l_address, *r_address;
    YYSTYPE token_info;
 
@@ -419,7 +428,8 @@ machine_execute_mov ()
    switch (token)
    {
       case TOKEN_DREF_L:
-         l_address = machine_get_address (TRUE);
+         mem_write_addr = machine_get_address_int (TRUE);
+         l_address = memory_get_word(_thecpu.mem_write_addr);
          break;
 
       case TOKEN_REGISTER:
@@ -471,11 +481,21 @@ machine_execute_mov ()
          ; /* Nothing to do. */
    }
 
+   /* We have a successful write, log the operation. */
+
+
    return XSM_SUCCESS;
 }
 
 xsm_word*
 machine_get_address (int write)
+{
+   int address = machine_get_address_int (write);
+   return memory_get_word(address);
+}
+
+int
+machine_get_address_int (int write)
 {
    int token, address;
    YYSTYPE token_info;

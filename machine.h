@@ -82,6 +82,13 @@ struct _xsm_cpu
    int disk_state, disk_wait;
    int console_state, console_wait;
 
+   /* For debugging purpose. */
+   /* Whether there was a write to RAM and to which address was it
+    * written to. A positive number denotes a valid write.
+    * This member is used to manage watch while debugging. 
+    */
+   int mem_wite_addr;
+
    disk_operation disk_op;
    console_operation console_op;
 }
@@ -165,6 +172,9 @@ xsm_word*
 machine_get_address (int write);
 
 int
+machine_get_address_int (int write)
+
+int
 machine_translate_address (int address, int write);
 
 int
@@ -244,5 +254,8 @@ machine_destroy ();
 
 void
 machine_raise_exception (const char *exp);
+
+void
+machine_pre_execute ();
 
 #endif
