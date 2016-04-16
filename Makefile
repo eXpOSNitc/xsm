@@ -5,7 +5,7 @@ LEX = lex
 
 default: xsm
 
-xsm: lex.yy.o machine.o main.o simulator.o word.o memory.o registers.o tokenize.o disk.o
+xsm: lex.yy.o machine.o main.o simulator.o word.o memory.o registers.o tokenize.o disk.o debug.o
 	$(CC) $(CFLAGS) -o xsm lex.yy.o machine.o main.o simulator.o word.o memory.o registers.o tokenize.o disk.o -ll
 
 lex.yy.c: parse.l
@@ -40,3 +40,6 @@ disk.o: disk.c disk.h
 
 exception.o: exception.c exception.h
 	$(CC) $(CFLAGS) -c exception.c
+
+debug.o: debug.c debug.h
+	$(CC) $(CFLAGS) -c debug.c
