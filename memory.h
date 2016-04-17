@@ -28,6 +28,9 @@ memory_translate_address (int ptbr, int address, int write);
 int
 memory_translate_page (int ptbr, int page, int write);
 
+void
+memory_retrieve_raw_instr(char *dest, int address);
+
 xsm_word*
 memory_get_page (int page);
 

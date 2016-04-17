@@ -129,7 +129,7 @@ machine_register_exception (char *restrict message, int code)
 
    mode = machine_get_mode();
    exception_set(message, code, mode);
-   /* Fire! */
+   /* Abandon ship! Abandon ship! */
    longjmp (_thecpu.h_exp_point, XSM_EXCEPTION_OCCURED);
 }
 
@@ -243,9 +243,24 @@ machine_handle_exception()
 
    switch(mode)
    {
+      case EXP_ILLMEM:
+         word_store_integer (reg_ema, exception_get_ma());
+         break;
+
+      case EXP_PAGEFAULT:
+         word_store_integer (reg_epn, exception_get_epn());
+         break;
    }
 
-   return XSM_SUCCESS;
+   if (XSM_MODE_USER == mode)
+   {
+      machine_execute_interrupt_do(XSM_INTERRUPT_EXHANDLER);
+      return XSM_SUCCESS;
+   }
+
+   fprintf (stderr, "%s: System halted.\n", message);
+   /* TODO May print the machine status if required. */
+   return XSM_FAILURE;
 }
 
 void
@@ -563,6 +578,7 @@ machine_get_address (int write)
    return machine_memory_get_word(address);
 }
 
+/* Retrieve the memory address from the instruction stream as an *integer*. */
 int
 machine_get_address_int (int write)
 {
@@ -689,6 +705,10 @@ machine_execute_arith (int opcode)
 
       case DIV:
          /* Integer division by zero !*/
+         if (0 == r_value)
+         {
+            machine_register_exception("Integer divide by zero.", EXP_ARITH);
+         }
          result = l_value / r_value;
          break;
 
@@ -958,7 +978,7 @@ machine_execute_interrupt_do (int interrupt)
 int
 machine_interrupt_address (int int_num)
 {
-   if (int_num < 0 || int_num > 18)
+   if (int_num < -1 || int_num > 18)
       return -1; /* Not supposed to happen. */
 
    return (int_num * 2 + 4) * XSM_PAGE_SIZE;

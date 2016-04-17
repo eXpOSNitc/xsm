@@ -9,6 +9,7 @@
 #include "memory.h"
 #include "disk.h"
 #include "exception.h"
+#include "debug.h"
 
 #define XSM_ADDR_DREF 0
 #define XSM_ADDR_NODREF 1
@@ -60,6 +61,9 @@
 
 #define XSM_CONSOLE_PRINT 0
 #define XSM_CONSOLE_READ 1
+
+/* -1 is the number of exception handler *interrupt* */
+#define XSM_INTERRUPT_EXHANDLER -1
 
 typedef
 struct _disk_operation

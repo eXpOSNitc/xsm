@@ -58,8 +58,23 @@ memory_translate_address (int ptbr, int address, int write)
 
    if (target_page < 0)
       return target_page;
-   
+
    return target_page + offset;
+}
+
+void
+memory_retrieve_raw_instr(char *dest, int address)
+{
+   int i;
+   xsm_word *instr = memory_get_word(address++);
+
+   strcpy (dest, word_get_string(instr));
+
+   for (i = 1; i < XSM_INSTRUCTION_SIZE; ++i)
+   {
+      instr = memory_get_word(address++);
+      strcat(dest, word_get_string(instr));
+   }
 }
 
 xsm_word*
