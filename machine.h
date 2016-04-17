@@ -2,10 +2,13 @@
 
 #define XSM_MACHINE_H
 
+#include <setjmp.h>
+
 #include "types.h"
 #include "registers.h"
 #include "memory.h"
 #include "disk.h"
+#include "exception.h"
 
 #define XSM_ADDR_DREF 0
 #define XSM_ADDR_NODREF 1
@@ -91,6 +94,9 @@ struct _xsm_cpu
 
    disk_operation disk_op;
    console_operation console_op;
+
+   /* Exception point */
+   jmp_buf h_exp_point;
 }
 xsm_cpu;
 
@@ -257,5 +263,8 @@ machine_raise_exception (const char *exp);
 
 void
 machine_pre_execute ();
+
+int
+machine_get_mode ();
 
 #endif

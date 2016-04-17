@@ -104,7 +104,7 @@ machine_serve_instruction (char *buffer, int *read_bytes, int max)
    ip_val = word_get_integer(ip_reg);
 
    ip_val = machine_translate_address(ip_val, FALSE);
-   instr_mem = memory_get_word(ip_val);
+   instr_mem = machine_memory_get_word(ip_val);
 
    memcpy (buffer, instr_mem, bytes_to_read);
 
@@ -119,6 +119,35 @@ machine_serve_instruction (char *buffer, int *read_bytes, int max)
    *read_bytes = bytes_to_read;
 
    return TRUE;
+}
+
+/* Raises an exception. This function never returns. */
+void
+machine_register_exception (char *restrict message, int code)
+{
+   int mode;
+
+   mode = machine_get_mode();
+   exception_set(message, code, mode);
+   /* Fire! */
+   longjmp (_thecpu.h_exp_point, XSM_EXCEPTION_OCCURED);
+}
+
+xsm_word*
+machine_memory_get_word (int address)
+{
+   xsm_word *result;
+
+   result = memory_get_word(address);
+
+   if (NULL == result)
+   {
+      /* Doomsday! */
+      exception_set_ema(address);
+      machine_register_exception("Illegal memory access.", EXP_ILLMEM);
+   }
+
+   return result;
 }
 
 xsm_word *
@@ -147,10 +176,20 @@ machine_run ()
    YYSTYPE token_info;
    xsm_word *ipreg;
    int ipval;
+   int exp_occured;
 
    ipreg = machine_get_ipreg ();
 
    while (TRUE){
+      /* Set the exception point. */
+      exp_occured = setjmp (_thecpu.h_exp_point);
+
+      if (exp_occured == XSM_EXCEPTION_OCCURED)
+      {
+         if (XSM_SUCCESS != machine_handle_exception())
+            break;
+      }
+
       /* Flush the instruction stream. */
       tokenize_clear_stream ();
 
@@ -158,15 +197,15 @@ machine_run ()
 
       token = tokenize_next_token (&token_info);
 
-      if (token != TOKEN_INSTRUCTION)
-      {
-         exception_raise (0, "The simulator has encountered an illegal instruction.");
-      }
-
       /* IP = IP + instruction length. */
       ipval = word_get_integer(ipreg);
       ipval = ipval + XSM_INSTRUCTION_SIZE;
       word_store_integer (ipreg, ipval);
+
+      if (token != TOKEN_INSTRUCTION)
+      {
+         machine_register_exception("The simulator has encountered an illegal instruction", EXP_ILLINSTR);
+      }
 
       opcode = machine_get_opcode(token_info.str);
       machine_execute_instruction (opcode);
@@ -176,6 +215,37 @@ machine_run ()
    }
 
    return TRUE;
+}
+
+int
+machine_handle_exception()
+{
+   char *message;
+   int code, mode;
+   int curr_ip;
+
+   xsm_word *reg_eip, *reg_epn, *reg_ec, *reg_ema;
+
+   /* Get the details about the exception. */
+   mode = machine_get_mode ();
+   code = exception_code ();
+   message = exception_message();
+
+   /* Get the exception registers. */
+   reg_eip = registers_get_register("EIP");
+   reg_epn = registers_get_register("EPN");
+   reg_ec = registers_get_register("EC");
+   reg_ema = registers_get_register("EMA");
+
+   /* After the fetch, IP = IP + 2, undo.  */
+   curr_ip = word_get_integer(registers_get_register("IP")) - 2;
+   word_store_integer(reg_eip, curr_ip);
+
+   switch(mode)
+   {
+   }
+
+   return XSM_SUCCESS;
 }
 
 void
@@ -330,6 +400,12 @@ machine_execute_instruction (int opcode)
 }
 
 int
+machine_get_mode ()
+{
+   return _thecpu.mode;
+}
+
+int
 machine_execute_logical (int opcode)
 {
    xsm_word *dest_reg, *src_left_reg, *src_right_reg;
@@ -429,7 +505,7 @@ machine_execute_mov ()
    {
       case TOKEN_DREF_L:
          mem_write_addr = machine_get_address_int (TRUE);
-         l_address = memory_get_word(_thecpu.mem_write_addr);
+         l_address = machine_memory_get_word(_thecpu.mem_write_addr);
          break;
 
       case TOKEN_REGISTER:
@@ -438,18 +514,11 @@ machine_execute_mov ()
          break;
    }
 
-   if (!l_address)
-   {
-      exception_raise(0, "Error in calculating the target address.");
-      return XSM_FAILURE;
-   }
-
    token = tokenize_next_token(&token_info);
 
    if (token != TOKEN_COMMA)
    {
-      exception_raise (0, "Malformed instruction.");
-      return XSM_FAILURE;
+      machine_register_exception("Malformed instruction.", EXP_ILLINSTR);
    }
 
    token = tokenize_peek (&token_info);
@@ -491,7 +560,7 @@ xsm_word*
 machine_get_address (int write)
 {
    int address = machine_get_address_int (write);
-   return memory_get_word(address);
+   return machine_memory_get_word(address);
 }
 
 int
@@ -519,7 +588,7 @@ machine_get_address_int (int write)
 
       default:
          /* Mark him. */
-         exception_raise (0, "Invalid memory derefence.");
+         machine_register_exception ("Invalid memory derefence.", EXP_ILLINSTR);
    }
 
    /* Next one is a bracket, neglect. */
@@ -546,7 +615,18 @@ machine_get_address_int (int write)
    /* Ask the MMU to translate the address for us. */
    address = machine_translate_address (address, write);
 
-   return memory_get_word(address);
+   if (XSM_MEM_NOWRITE == address)
+   {
+      exception_set_ema (address);
+      machine_register_exception("Access violation.", EXP_ILLMEM);
+   }
+   else if (XSM_MEM_PAGEFAULT == address)
+   {
+      exception_set_epn (memory_addr_page(address));
+      machine_register_exception("Page fault.", EXP_PAGEFAULT);
+   }
+
+   return machine_memory_get_word(address);
 }
 
 int
@@ -573,7 +653,7 @@ machine_execute_arith (int opcode)
    token = tokenize_next_token(&token_info);
 
    if (token != TOKEN_REGISTER)
-      exception_raise (0, "Wrong operand.");
+      machine_register_exception("Wrong operand.", EXP_ILLINSTR);
 
    l_operand = registers_get_register(token_info.str);
    l_value = word_get_integer(l_operand);
@@ -736,7 +816,7 @@ machine_stack_pointer (int write)
 
    stack_top = machine_translate_address (stack_top, write);
 
-   return memory_get_word(stack_top);
+   return machine_memory_get_word(stack_top);
 }
 
 int

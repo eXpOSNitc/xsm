@@ -7,6 +7,8 @@
 
 
 #define XSM_MEMORY_SIZE (XSM_PAGE_SIZE*XSM_MEMORY_NUMPAGES)
+#define XSM_MEM_NOWRITE -1
+#define XSM_MEM_PAGEFAULT -2
 
 int
 memory_init ();
@@ -16,6 +18,9 @@ memory_get_word (int address);
 
 int
 memory_is_address_valid (int address);
+
+int
+memory_addr_page(int address);
 
 int
 memory_translate_address (int ptbr, int address, int write);
