@@ -156,8 +156,17 @@ debug_command(char *command)
 			break;
 
 		case DEBUG_PCB:
-			//TODO
+			arg1 = strtok (NULL, delim);
 
+			if (!arg1)
+				debug_display_pcb();
+			else
+				debug_display_pcb_pid (atoi(arg1));
+			break;
+
+		case DEBUG_PAGETABLE:
+
+			break;
 	}
 
 	return FALSE;
@@ -287,4 +296,169 @@ debug_display_mem_range (int page_l, page_h)
 	}
 
 	return TRUE;
+}
+
+int
+debug_display_pcb_pid (int pid)
+{
+	int i, ptr;
+	xsm_word *word;
+	const char *fields[] = {"Tick", "PID", "PPID", "UserID", "State", "Swap Flag", "Inode Index",
+	"Input Buffer", "Mode Flag", "User Area Swap Status", "User Area Page Number",
+	"Kernel Stack Pointer", "User Stack Pointer", "PTBR", "Unused"
+	};
+	const int fields_len[] = {1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2};
+	int fields = 14;
+
+	ptr = DEBUG_LOC_PT + pid * PT_ENTRY_SIZE;
+
+	for (i = 0; i < fields; ++i)
+	{
+		printf ("%s: ", fields[i]);
+
+		/* Display the corresponding number of words. */
+		int j;
+
+		for (j = 0; j < fields_len[i]; ++j)
+		{
+			word = memory_get_word(ptr);
+			printf ("%s ", word_get_string(word));
+			ptr = ptr + 1;
+
+		}
+
+		printf ("\n");
+	}
+
+	return TRUE;
+}
+
+int
+debug_display_pcb ()
+{
+	int pid;
+
+	pid = debug_active_process();
+
+	if (pid > -1)
+	{
+		debug_display_pcb_pid(pid);
+		return TRUE;
+	}
+	
+	printf ("No active processes.\n");
+	return FALSE;
+}
+
+/* Returns the PID of the active process.*/
+int
+debug_active_process ()
+{
+	int ptr, pid, i;
+	int pid_base, state_base;
+	xsm_word *w_pid_base, *w_state_base;
+
+	ptr = DEBUG_LOC_PT;
+	pid = -1;
+
+	/* Determine the active process and display it. */
+	for (i = 0; i < MAX_PROC_NUM; ++i)
+	{
+		pid_base = ptr + 1;
+		state_base = ptr + 4;
+
+		w_pid_base = memory_get_word (pid_base);
+		w_state_base = memory_get_word(state_base);
+
+		if (DEBUG_PROC_RUNNING == word_get_integer(w_state_base))
+		{
+			pid = word_get_integer(w_pid_base);
+			break;
+		}
+
+		ptr = ptr + PT_ENTRY_SIZE;
+	}
+
+	return pid;
+}
+
+int
+debug_pcb_base (int pid)
+{
+	int ptr, pid_base, i;
+	xsm_word *w_pid_base;
+	int result = -1;
+
+	ptr = DEBUG_LOC_PT;
+
+	for (i = 0; i < MAX_PROC_NUM; ++i)
+	{
+		pid_base = ptr + 1;
+
+		w_pid_base = memory_get_word(pid_base);
+
+		if (pid == word_get_integer(w_pid_base))
+		{
+			result = ptr;
+			break;
+		}
+
+		ptr = ptr + PT_ENTRY_SIZE;
+	}
+
+	return result;
+}
+
+int
+debug_display_pt_ptbr ()
+{
+	int addr;
+	xsm_word *reg_ptbr;
+
+	reg_ptr = registers_get_register("PTBR");
+	addr = word_get_integer(reg_ptbr);
+
+	return debug_display_pt_at (addr);
+}
+
+int
+debug_display_pt_at (int addr)
+{
+	int i, ptr;
+	xsm_word *word;
+
+	ptr = addr;
+
+	for (i = 1; i <= MAX_NUM_PAGES; ++i)
+	{
+		printf ("VIRT %d\t", i);
+		word = memory_get_word(ptr++);
+		printf ("PHY %s\t", word_get_string(word));
+
+		word = memory_get_word(ptr++);
+		printf ("REF %s\t", word_get_string(word));
+
+		word = memory_get_word(ptr++);
+		printf ("VAL %s\t", word_get_string(word));
+
+		word = memory_get_word(ptr++);
+		printf ("WRITE %s\t", word_get_string(word));
+	}
+
+	return TRUE;
+}
+
+int
+debug_display_pt_pid (int pid)
+{
+	int pcb_base, ptbr_addr, addr;
+	xsm_word *word;
+
+	pcb_base = debug_pcb_base (pid);
+	ptbr_addr = pcb_base + PTBR_PCB_OFFSET;
+
+	word = memory_get_word(ptbr_addr);
+
+	addr = word_get_integer (word);
+	return debug_display_pt_at(addr);
 }

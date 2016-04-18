@@ -27,6 +27,14 @@
 #define DEBUG_EXIT			13
 #define DEBUG_HELP			14
 
+/* The following is highly dependent on the OS implementation. */
+#define DEBUG_LOC_PT		28672
+#define MAX_PROC_NUM		16
+#define PT_ENTRY_SIZE		16
+#define DEBUG_PROC_RUNNING	1 
+#define MAX_NUM_PAGES		10
+#define PTBR_PCB_OFFSET		14
+
 struct
 _xsm_cpu;
 
@@ -62,5 +70,35 @@ debug_command_code (const char *cmd);
 
 int
 debug_display_all_registers();
+
+int
+debug_display_register (const char *regname);
+
+int
+debug_display_range_reg (const char *reg_b_name, const char *reg_e_name);
+
+int
+debug_display_mem(int page);
+
+int
+debug_display_mem_range (int page_l, page_h);
+
+int
+debug_display_pcb_pid (int pid);
+
+int
+debug_display_pcb ();
+
+int
+debug_active_process ();
+
+int
+debug_pcb_base (int pid);
+
+int
+debug_display_pt_ptbr ();
+
+int
+debug_display_pt_at (int addr);
 
 #endif
