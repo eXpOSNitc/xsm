@@ -95,3 +95,16 @@ registers_destroy()
 {
    free (_registers);
 }
+
+const
+char **
+registers_names ()
+{
+   return _register_names; 
+}
+
+int
+registers_len()
+{
+   return XSM_NUM_REG;
+}

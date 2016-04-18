@@ -57,4 +57,11 @@ registers_zero_register ();
 void
 registers_destroy();
 
+const
+char **
+registers_names ();
+
+int
+registers_len();
+
 #endif

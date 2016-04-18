@@ -127,8 +127,37 @@ debug_command(char *command)
 			if (!arg1)
 			{
 				debug_display_all_registers();
-				break;
 			}
+			else{
+				arg2 = strtok(NULL, delim);
+				if (!arg2)
+				{
+					debug_display_register(arg1);
+				}
+				else
+				{
+					debug_display_range_reg(arg1, arg2);
+				}
+			}
+			break;
+
+		case DEBUG_MEM:
+			arg1 = strtok (NULL, delim);
+			arg2 = strtok (NULL, delim);
+
+			if (arg2)
+			{
+				debug_display_mem_range(atoi(arg1), atoi(arg2));
+			}
+			else
+			{
+				debug_display_mem(atoi(arg1));
+			}
+			break;
+
+		case DEBUG_PCB:
+			//TODO
+
 	}
 
 	return FALSE;
@@ -157,5 +186,105 @@ debug_command_code (const char *cmd)
 int
 debug_display_all_registers()
 {
-	return FALSE;
+	const char **reg_names = registers_names ();
+	int num_regs = registers_len ();
+	int i;
+	char *content;
+	xsm_word *reg;
+
+	for (i = 0; i < num_regs; ++i)
+	{
+		reg = registers_get_register (reg_names[i]);
+		content = word_get_string (reg);
+		printf ("%s: %s\n", reg_names[i], content);
+	}
+
+	return TRUE;
+}
+
+int
+debug_display_register (const char *regname)
+{
+	xsm_word *reg;
+	char *content;
+
+	reg = registers_get_register (regname);
+	content = word_get_string (reg);
+
+	if (!reg)
+	{
+		printf ("No such register.\n");
+		return FALSE;
+	}
+
+	printf ("%s: %s\n", regname, content);
+	return TRUE;
+}
+
+int
+debug_display_range_reg (const char *reg_b_name, const char *reg_e_name)
+{
+	const char **reg_names = registers_names ();
+	int num_regs = registers_len ();
+	int i;
+	xsm_word *reg;
+	char *content;
+
+	for (i = 0; i <  num_regs; ++i)
+	{
+		if (!strcmp (reg_b_name, reg_names[i]))
+			break;
+	}
+
+	for (; i < num_regs; ++i)
+	{
+		reg = registers_get_register (reg_names[i]);
+		content = word_get_string(reg);
+
+		printf ("%s: %s\n", reg_names[i], content);
+
+		if (!strcmp (reg_e_name, reg_names[i]))
+			break;
+	}
+
+	return TRUE;
+}
+
+int
+debug_display_mem(int page)
+{
+	xsm_word *page;
+	int i;
+	char *content;
+
+	page = memory_get_page(page);
+
+	if (!page)
+	{
+		printf ("No such page.\n");
+		return FALSE;
+	}
+
+	for (i = 0; i < XSM_PAGE_SIZE; i++)
+	{
+		content = word_get_string(page);
+		printf("+%d: %s\n", i, content);
+		page++; /* ! */
+	}
+
+	return TRUE;
+}
+
+int
+debug_display_mem_range (int page_l, page_h)
+{
+	int i;
+
+	for (i = page_l; i <= page_h; ++i)
+	{
+		printf ("Page: %d\n", i);
+		debug_display_mem(i);
+	}
+
+	return TRUE;
 }
