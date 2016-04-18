@@ -1,9 +1,15 @@
 #include "debug.h"
 
 #include <stdio.h>
+#include <string.h>
 
+static
 debug_status
 _db_status;
+
+static
+xsm_cpu
+*db_machine;
 
 const
 char *_db_commands_lh[] = {
@@ -96,7 +102,7 @@ debug_show_interface ()
 }
 
 int
-debug_command(const char *restrict command)
+debug_command(char *command)
 {
 	char *arg1, *cmd, *arg2;
 	int code;
@@ -107,7 +113,7 @@ debug_command(const char *restrict command)
 
 	code = debug_command_code (cmd);
 
-	switch (code):
+	switch (code)
 	{
 		case DEBUG_STEP:
 			return TRUE;
@@ -120,14 +126,16 @@ debug_command(const char *restrict command)
 			arg1 = strtok(NULL, delim);
 			if (!arg1)
 			{
-				debug_display_registers();
+				debug_display_all_registers();
 				break;
 			}
 	}
+
+	return FALSE;
 }
 
 int
-debug_command_code (const char *restrict cmd)
+debug_command_code (const char *cmd)
 {
 	int i;
 
@@ -144,4 +152,10 @@ debug_command_code (const char *restrict cmd)
 	}
 
 	return -1;
+}
+
+int
+debug_display_all_registers()
+{
+	return FALSE;
 }

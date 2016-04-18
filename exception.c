@@ -25,7 +25,7 @@ exception_message ()
 int
 exception_code()
 {
-	return _exception.code;
+	return _exception.type;
 }
 
 void

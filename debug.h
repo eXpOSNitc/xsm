@@ -9,7 +9,7 @@
 #define ON TRUE
 
 #define DEBUG_COMMAND_LEN 100
-#define DEBUG_STRING_SIZE 100
+#define DEBUG_STRING_LEN 100
 
 #define DEBUG_STEP			0
 #define DEBUG_CONTINUE		1
@@ -27,8 +27,14 @@
 #define DEBUG_EXIT			13
 #define DEBUG_HELP			14
 
+struct
+_xsm_cpu;
+
+typedef
+struct _xsm_cpu
+xsm_cpu;
+
 /* The machine that is debugged. */
-xsm_cpu *db_machine;
 
 typedef
 struct _debug_status
@@ -49,6 +55,12 @@ int
 debug_show_interface ();
 
 int
-debug_command(const char *restrict command);
+debug_command(char *command);
+
+int
+debug_command_code (const char *cmd);
+
+int
+debug_display_all_registers();
 
 #endif

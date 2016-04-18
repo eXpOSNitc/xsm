@@ -17,6 +17,9 @@
 #define PRIVILEGE_USER 0
 #define PRIVILEGE_KERNEL 1
 
+/* Any random value other than zero. */
+#define XSM_EXCEPTION_OCCURED 256
+
 /* Operation codes. */
 #define MOV       0
 #define ADD       1
@@ -94,7 +97,7 @@ struct _xsm_cpu
     * written to. A positive number denotes a valid write.
     * This member is used to manage watch while debugging. 
     */
-   int mem_wite_addr;
+   int mem_write_addr;
 
    disk_operation disk_op;
    console_operation console_op;
@@ -160,6 +163,10 @@ machine_get_spreg ();
 int
 machine_run ();
 
+/* The one point for all exception handling. */
+int
+machine_handle_exception();
+
 void
 machine_post_execute ();
 
@@ -182,10 +189,13 @@ xsm_word*
 machine_get_address (int write);
 
 int
-machine_get_address_int (int write)
+machine_get_address_int (int write);
 
 int
 machine_translate_address (int address, int write);
+
+xsm_word*
+machine_memory_get_word (int address);
 
 int
 machine_execute_arith (int opcode);

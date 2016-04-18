@@ -1,6 +1,8 @@
 #include "memory.h"
 #include "exception.h"
+
 #include <stdlib.h>
+#include <string.h>
 
 static
 xsm_word *_xsm_mem;

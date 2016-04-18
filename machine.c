@@ -143,7 +143,7 @@ machine_memory_get_word (int address)
    if (NULL == result)
    {
       /* Doomsday! */
-      exception_set_ema(address);
+      exception_set_ma(address);
       machine_register_exception("Illegal memory access.", EXP_ILLMEM);
    }
 
@@ -252,7 +252,7 @@ machine_handle_exception()
          break;
    }
 
-   if (XSM_MODE_USER == mode)
+   if (PRIVILEGE_USER == mode)
    {
       machine_execute_interrupt_do(XSM_INTERRUPT_EXHANDLER);
       return XSM_SUCCESS;
@@ -633,7 +633,7 @@ machine_get_address_int (int write)
 
    if (XSM_MEM_NOWRITE == address)
    {
-      exception_set_ema (address);
+      exception_set_ma (address);
       machine_register_exception("Access violation.", EXP_ILLMEM);
    }
    else if (XSM_MEM_PAGEFAULT == address)
@@ -642,7 +642,7 @@ machine_get_address_int (int write)
       machine_register_exception("Page fault.", EXP_PAGEFAULT);
    }
 
-   return machine_memory_get_word(address);
+   return address;
 }
 
 int
