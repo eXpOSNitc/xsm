@@ -20,6 +20,7 @@ char *_db_commands_lh[] = {
 	"pcb",
 	"pagetable",
 	"filetable",
+	"memfreelist"
 	"diskfreelist",
 	"inodetable",
 	"usertable",
@@ -165,8 +166,29 @@ debug_command(char *command)
 			break;
 
 		case DEBUG_PAGETABLE:
+			arg1 = strtok (NULL, delim);
 
+			if (!arg1)
+			{
+				debug_display_pt_ptbr();
+			}
+			else
+			{
+				debug_display_pt_pid(atoi(arg1));
+			}
 			break;
+
+		case DEBUG_FILETABLE:
+			debug_display_ft();
+			break;
+
+		case DEBUG_MEMFREELIST:
+			debug_display_memlist();
+			break;
+
+		case DEBUG_INODETABLE:
+			debug_display_inodetable();
+			break;	
 	}
 
 	return FALSE;
@@ -461,4 +483,68 @@ debug_display_pt_pid (int pid)
 
 	addr = word_get_integer (word);
 	return debug_display_pt_at(addr);
+}
+
+int
+debug_display_ft ()
+{
+	int ptr, i;
+	xsm_word *word;
+
+	ptr = DEBUG_LOC_SWOFT;
+
+	for (i = 0; i < MAX_OPENFILE_NUM; ++i)
+	{
+		word = memory_get_word(ptr++);
+		printf ("Inode Index %s\t", word_get_string(word));
+
+		word = memory_get_word(ptr++);
+		printf("Open Instance Count %s\t", word_get_string(word));
+
+		word = memory_get_word(ptr++)
+		printf ("Lseek %s\n", word_get_string(word));
+		ptr++; /* Unused field. */
+	}
+
+	return TRUE;
+}
+
+int
+debug_display_memlist()
+{
+	int i, ptr;
+	xsm_word *word;
+
+	ptr = DEBUG_LOC_MFL;
+
+	for (i = 1; i <= MAX_MEM_LIST; ++i)
+	{
+		word = memory_get_word(ptr++);
+		printf ("%d\t%s\n", i, word_get_string(ptr));
+	}
+
+	return TRUE;
+}
+
+int
+debug_display_dfl()
+{
+	int i, ptr;
+	xsm_word *word;
+
+	ptr = DEBUG_LOC_DFL;
+
+	for (i = 0; i < DISK_SIZE; ++i)
+	{
+		word = memory_get_word(ptr++);
+		printf("%d\t%s\n", i, word_get_string(ptr));
+	}
+
+	return TRUE;
+}
+
+int
+debug_display_inodetable ()
+{
+	
 }

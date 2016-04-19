@@ -18,14 +18,15 @@
 #define DEBUG_PCB			4
 #define DEBUG_PAGETABLE		5
 #define DEBUG_FILETABLE		6
-#define DEBUG_DISKFREELIST	7
-#define DEBUG_INODETABLE	8
-#define DEBUG_USERTABLE		9
-#define DEBUG_LOCATION		10
-#define DEBUG_WATCH 		11
-#define DEBUG_WATCHCLEAR	12
-#define DEBUG_EXIT			13
-#define DEBUG_HELP			14
+#define DEBUG_MEMFREELIST	7
+#define DEBUG_DISKFREELIST	8
+#define DEBUG_INODETABLE	9
+#define DEBUG_USERTABLE		10
+#define DEBUG_LOCATION		11
+#define DEBUG_WATCH 		12
+#define DEBUG_WATCHCLEAR	13
+#define DEBUG_EXIT			14
+#define DEBUG_HELP			15
 
 /* The following is highly dependent on the OS implementation. */
 #define DEBUG_LOC_PT		28672
@@ -34,6 +35,14 @@
 #define DEBUG_PROC_RUNNING	1 
 #define MAX_NUM_PAGES		10
 #define PTBR_PCB_OFFSET		14
+
+/* System wide open file table. */
+#define DEBUG_LOC_SWOFT		29696
+#define MAX_OPENFILE_NUM	32
+#define MAX_MEM_PAGE		128
+#define DEBUG_LOC_MFL		29184
+#define DEBUG_LOC_DFL		31232
+#define DISK_SIZE			512
 
 struct
 _xsm_cpu;
@@ -100,5 +109,21 @@ debug_display_pt_ptbr ();
 
 int
 debug_display_pt_at (int addr);
+
+int
+debug_display_pt_pid (int pid);
+
+int
+debug_display_ft ();
+
+int
+debug_display_memlist();
+
+int
+debug_display_dfl();
+
+int
+debug_display_inodetable ();
+
 
 #endif
