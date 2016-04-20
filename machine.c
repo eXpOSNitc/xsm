@@ -74,6 +74,10 @@ machine_init (xsm_options *options)
 
    machine_set_mode(PRIVILEGE_KERNEL);
 
+   /* The disk and console is idle.*/
+   _thecpu.console_state = XSM_CONSOLE_IDLE;
+   _thecpu.disk_state = XSM_DISK_IDLE;
+
    return XSM_SUCCESS;
 }
 
@@ -434,7 +438,6 @@ machine_execute_instruction (int opcode)
          break;
 
       case HALT:
-         printf ("System halted.\n");
          return XSM_HALT;
    }
 

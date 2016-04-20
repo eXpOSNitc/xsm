@@ -66,3 +66,6 @@ R[0-9]+ {
    yylval.str = yytext;
    return TOKEN_INSTRUCTION;
 }
+
+. ;
+

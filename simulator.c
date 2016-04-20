@@ -23,7 +23,7 @@ simulator_run ()
 	if (!machine_run ())
 		return XSM_FAILURE;
 
-	printf ("Machine off.\n");
+	printf ("Machine is halting.\n");
 
 	/* A little housekeeping. */
 	machine_destroy ();
