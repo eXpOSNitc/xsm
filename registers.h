@@ -64,4 +64,16 @@ registers_names ();
 int
 registers_len();
 
+int
+registers_get_integer (const char *name);
+
+char*
+registers_get_string (const char *name);
+
+int
+registers_store_integer (const char *name, int val);
+
+int
+registers_store_string(const char *name, char *str);
+
 #endif

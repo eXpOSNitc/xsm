@@ -108,3 +108,43 @@ registers_len()
 {
    return XSM_NUM_REG;
 }
+
+int
+registers_get_integer (const char *name)
+{
+   xsm_word *reg;
+
+   reg = registers_get_register(name);
+   return word_get_integer (reg);
+}
+
+char*
+registers_get_string (const char *name)
+{
+   xsm_word *reg;
+
+   reg = registers_get_register(name);
+
+   if (!reg)
+      return NULL;
+   
+   return word_get_string(reg);
+}
+
+int
+registers_store_integer (const char *name, int val)
+{
+   xsm_word *reg;
+
+   reg = registers_get_register(name);
+   return word_store_integer(reg, val);
+}
+
+int
+registers_store_string(const char *name, char *str)
+{
+   xsm_word *reg;
+
+   reg = registers_get_register(name);
+   return word_store_string(reg, str);
+}

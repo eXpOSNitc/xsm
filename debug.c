@@ -1,15 +1,12 @@
 #include "debug.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static
 debug_status
 _db_status;
-
-static
-xsm_cpu
-*db_machine;
 
 const
 char *_db_commands_lh[] = {
@@ -52,9 +49,8 @@ char *_db_commands_sh[] = {
 };
 
 int
-debug_init (xsm_cpu *machine)
+debug_init ()
 {
-	db_machine = machine;
 	_db_status.state = OFF;
 
 	return TRUE;
@@ -221,12 +217,10 @@ debug_display_all_registers()
 	int num_regs = registers_len ();
 	int i;
 	char *content;
-	xsm_word *reg;
 
 	for (i = 0; i < num_regs; ++i)
 	{
-		reg = registers_get_register (reg_names[i]);
-		content = word_get_string (reg);
+		content = registers_get_string (reg_names[i]);
 		printf ("%s: %s\n", reg_names[i], content);
 	}
 
@@ -236,13 +230,11 @@ debug_display_all_registers()
 int
 debug_display_register (const char *regname)
 {
-	xsm_word *reg;
 	char *content;
 
-	reg = registers_get_register (regname);
-	content = word_get_string (reg);
+	content = registers_get_string (regname);
 
-	if (!reg)
+	if (!content)
 	{
 		printf ("No such register.\n");
 		return FALSE;
@@ -258,7 +250,6 @@ debug_display_range_reg (const char *reg_b_name, const char *reg_e_name)
 	const char **reg_names = registers_names ();
 	int num_regs = registers_len ();
 	int i;
-	xsm_word *reg;
 	char *content;
 
 	for (i = 0; i <  num_regs; ++i)
@@ -269,8 +260,7 @@ debug_display_range_reg (const char *reg_b_name, const char *reg_e_name)
 
 	for (; i < num_regs; ++i)
 	{
-		reg = registers_get_register (reg_names[i]);
-		content = word_get_string(reg);
+		content = registers_get_string (reg_names[i]);
 
 		printf ("%s: %s\n", reg_names[i], content);
 
@@ -284,30 +274,33 @@ debug_display_range_reg (const char *reg_b_name, const char *reg_e_name)
 int
 debug_display_mem(int page)
 {
-	xsm_word *page;
-	int i;
+	xsm_word *word;
+	int i, ptr;
 	char *content;
 
-	page = memory_get_page(page);
+	word = memory_get_page(page);
 
-	if (!page)
+	if (!word)
 	{
 		printf ("No such page.\n");
 		return FALSE;
 	}
 
+	ptr = page * XSM_PAGE_SIZE;
+
 	for (i = 0; i < XSM_PAGE_SIZE; i++)
 	{
-		content = word_get_string(page);
+		word = memory_get_word(ptr);
+		content = word_get_string(word);
 		printf("+%d: %s\n", i, content);
-		page++; /* ! */
+		ptr++; /* ! */
 	}
 
 	return TRUE;
 }
 
 int
-debug_display_mem_range (int page_l, page_h)
+debug_display_mem_range (int page_l, int page_h)
 {
 	int i;
 
@@ -323,18 +316,26 @@ debug_display_mem_range (int page_l, page_h)
 int
 debug_display_pcb_pid (int pid)
 {
-	int i, ptr;
-	xsm_word *word;
 	const char *fields[] = {"Tick", "PID", "PPID", "UserID", "State", "Swap Flag", "Inode Index",
 	"Input Buffer", "Mode Flag", "User Area Swap Status", "User Area Page Number",
 	"Kernel Stack Pointer", "User Stack Pointer", "PTBR", "Unused"
 	};
 	const int fields_len[] = {1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2};
-	int fields = 14;
+	const int n_fields = 14;
+	int ptr;
 
 	ptr = DEBUG_LOC_PT + pid * PT_ENTRY_SIZE;
 
-	for (i = 0; i < fields; ++i)
+	return debug_display_fields(ptr, fields, fields_len, n_fields);
+}
+
+int
+debug_display_fields (int baseptr, const char **fields, const int *fields_len, int n_fields)
+{
+	int i, ptr;
+	xsm_word *word;
+
+	for (i = 0; i < n_fields; ++i)
 	{
 		printf ("%s: ", fields[i]);
 
@@ -349,7 +350,7 @@ debug_display_pcb_pid (int pid)
 
 		}
 
-		printf ("\n");
+		printf (";");
 	}
 
 	return TRUE;
@@ -435,10 +436,8 @@ int
 debug_display_pt_ptbr ()
 {
 	int addr;
-	xsm_word *reg_ptbr;
 
-	reg_ptr = registers_get_register("PTBR");
-	addr = word_get_integer(reg_ptbr);
+	addr = registers_get_integer("PTBR");
 
 	return debug_display_pt_at (addr);
 }
@@ -447,24 +446,26 @@ int
 debug_display_pt_at (int addr)
 {
 	int i, ptr;
-	xsm_word *word;
+	const char *fields[] = {
+		"PHY", "REF", "VAL", "WRITE"
+	};
+	const int fields_len[] = {
+		1, 1, 1, 1
+	};
+
+	const int n_fields = 4;
+	const int entry_size = 4;
 
 	ptr = addr;
 
 	for (i = 1; i <= MAX_NUM_PAGES; ++i)
 	{
 		printf ("VIRT %d\t", i);
-		word = memory_get_word(ptr++);
-		printf ("PHY %s\t", word_get_string(word));
+		debug_display_fields(ptr, fields, fields_len, n_fields);
+		printf ("\n");
 
-		word = memory_get_word(ptr++);
-		printf ("REF %s\t", word_get_string(word));
-
-		word = memory_get_word(ptr++);
-		printf ("VAL %s\t", word_get_string(word));
-
-		word = memory_get_word(ptr++);
-		printf ("WRITE %s\t", word_get_string(word));
+		/* Each entry is of size 4. */
+		ptr = ptr + entry_size;
 	}
 
 	return TRUE;
@@ -501,7 +502,7 @@ debug_display_ft ()
 		word = memory_get_word(ptr++);
 		printf("Open Instance Count %s\t", word_get_string(word));
 
-		word = memory_get_word(ptr++)
+		word = memory_get_word(ptr++);
 		printf ("Lseek %s\n", word_get_string(word));
 		ptr++; /* Unused field. */
 	}
@@ -517,10 +518,10 @@ debug_display_memlist()
 
 	ptr = DEBUG_LOC_MFL;
 
-	for (i = 1; i <= MAX_MEM_LIST; ++i)
+	for (i = 1; i <= MAX_MEM_PAGE; ++i)
 	{
 		word = memory_get_word(ptr++);
-		printf ("%d\t%s\n", i, word_get_string(ptr));
+		printf ("%d\t%s\n", i, word_get_string(word));
 	}
 
 	return TRUE;
@@ -537,7 +538,7 @@ debug_display_dfl()
 	for (i = 0; i < DISK_SIZE; ++i)
 	{
 		word = memory_get_word(ptr++);
-		printf("%d\t%s\n", i, word_get_string(ptr));
+		printf("%d\t%s\n", i, word_get_string(word));
 	}
 
 	return TRUE;
@@ -546,5 +547,85 @@ debug_display_dfl()
 int
 debug_display_inodetable ()
 {
-	
+	const char *fields[] = {
+		"Type", "Name", "Size", "UID", "Perm.", "Unused", "D1", "D2", "D3", "D4", "Unused"
+	};
+	const int fields_len[] = {
+		1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 4
+	};
+	int i, ptr;
+	const int n_fields = 11;
+	const int entry_size = 16;
+
+	ptr = DEBUG_LOC_INODE;
+
+	for (i = 0; i < MAX_FILE_NUM; ++i)
+	{
+		debug_display_fields (ptr, fields, fields_len, n_fields);
+		printf ("\n");
+
+		/* Size of each entry is 16. */
+		ptr = ptr + entry_size;
+	}
+
+	return TRUE;
+}
+
+int
+debug_display_usertable()
+{
+	const char *fields[] = {
+		"User name", "Encrypted Password"
+	};
+	const int fields_len[] = {
+		1, 1
+	};
+	int i, ptr;
+	const int n_fields = 2;
+	const int entry_size = 2;
+
+	ptr = DEBUG_LOC_USERTABLE;
+
+	for (i = 0; i < MAX_USER_NUM; ++i)
+	{
+		debug_display_fields (ptr, fields, fields_len, n_fields);
+		printf ("\n");
+
+		/*Update ptr.*/
+		ptr = ptr + entry_size;
+	}
+
+	return TRUE;
+}
+
+int
+debug_display_location (int loc)
+{
+	xsm_word *word;
+	int mode, ptbr;
+
+	mode = machine_get_mode();
+
+	if (PRIVILEGE_KERNEL == mode)
+	{
+		word = memory_get_word (loc);
+	}
+	else
+	{
+		int tr_loc;
+
+		ptbr = registers_get_integer("PTBR");
+		tr_loc = memory_translate_address (ptbr, loc, FALSE);
+
+		if (tr_loc < 0)
+		{
+			printf ("A translation for this address is not available.\n");
+			return FALSE;
+		}
+
+		word = memory_get_word(tr_loc);
+	}
+
+	printf ("%s\n", word_get_string(word));
+	return TRUE;
 }
