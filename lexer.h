@@ -19,4 +19,7 @@ YYSTYPE;
 
 extern YYSTYPE yylval;
 
+void
+lexer_buffer_reset ();
+
 #endif

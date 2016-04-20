@@ -5,6 +5,21 @@
    #include "lexer.h"
 
    YYSTYPE yylval;
+
+   int
+   machine_serve_instruction (char *buffer, yy_size_t *read_bytes, int max);
+
+   void
+   lexer_buffer_reset ()
+   {
+      YY_FLUSH_BUFFER;
+   }
+
+   #define YY_INPUT(buffer,read_bytes,max)\
+   {\
+      machine_serve_instruction(buffer,&read_bytes,max);\
+   }\
+
 %}
 %%
 

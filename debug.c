@@ -52,8 +52,46 @@ int
 debug_init ()
 {
 	_db_status.state = OFF;
+	
+	debug_watch_clear ();
 
 	return TRUE;
+}
+
+int
+debug_watch_add (int loc)
+{
+	if (_db_status.wp_size >= DEBUG_MAX_WP)
+		return FALSE;
+
+	_db_status.wp[_db_status.wp_size] = loc;
+	_db_status.wp_size++;
+	return TRUE;
+}
+
+void
+debug_watch_clear ()
+{
+	_db_status.wp_size = 0;
+}
+
+int
+debug_watch_test (int mem_min, int mem_max)
+{
+	int i;
+
+	if (mem_min < 0)
+		return DEBUG_ERROR;
+
+	for (i = 0; i < _db_status.wp_size; ++i)
+	{
+		if (mem_min <= _db_status.wp[i] && _db_status.wp[i] <= mem_max)
+		{
+			return i;
+		}
+	}
+
+	return DEBUG_ERROR;
 }
 
 /* The instruction fetch-exec cycle will repeatedly call this function before each

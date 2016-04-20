@@ -48,6 +48,10 @@
 #define DEBUG_LOC_USERTABLE 31168
 #define MAX_USER_NUM		16
 
+/* The maximum number of watchpoints permitted. */
+#define DEBUG_MAX_WP		16
+#define DEBUG_ERROR			-1
+
 struct
 _xsm_cpu;
 
@@ -62,12 +66,23 @@ struct _debug_status
 {
 	int state;
 	int ip;
+	int wp[16];
+	int wp_size;
 }
 debug_status;
 
 /* Function prototypes. */
 int
 debug_init ();
+
+int
+debug_watch_add (int loc);
+
+void
+debug_watch_clear ();
+
+int
+debug_watch_test (int mem_min, int mem_max);
 
 int
 debug_next_step (int curr_ip);

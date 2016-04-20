@@ -92,12 +92,14 @@ struct _xsm_cpu
    int disk_state, disk_wait;
    int console_state, console_wait;
 
-   /* For debugging purpose. */
-   /* Whether there was a write to RAM and to which address was it
+   /* For debugging purpose.
+    * Whether there was a write to RAM and to which address was it
     * written to. A positive number denotes a valid write.
     * This member is used to manage watch while debugging. 
+    * There are two values. A low and a high. This is because the
+    * XSM processor supports multiple memory accesses in a single instruction(SIMD).
     */
-   int mem_write_addr;
+   int mem_low, mem_high;
 
    disk_operation disk_op;
    console_operation console_op;
@@ -117,42 +119,11 @@ struct _xsm_options
 }
 xsm_options;
 
-typedef
-struct _xsm_instruction
-{
-   /* Operation code. */
-   int opcode;
-   /* The previlege that is required for executing this instruction. */
-   int previlege;
-   /* Addressing mode for left and right operands.*/
-   int src_mode, dest_mode;
-   /* Left and right operands. */
-   xsm_word *dest;
-   xsm_word *src;
-   /* Additional information for the left and right operands. */
-   xsm_word dest_info;
-   xsm_word src_info;
-}
-xsm_instruction;
-
-typedef
-struct _xsm_operand
-{
-   int mode;
-   int previlege;
-   xsm_word *reg_or_mem;
-   xsm_word info;
-}
-xsm_operand;
-
 int
 machine_init (xsm_options *options);
 
 int
 machine_get_opcode (const char* instr);
-
-int
-machine_serve_instruction (char *buffer, int *read_bytes, int max);
 
 xsm_word *
 machine_get_ipreg ();

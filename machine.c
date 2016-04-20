@@ -66,7 +66,7 @@ machine_init (xsm_options *options)
       return XSM_FAILURE;
 
    /* Load the boot code onto the memory.. */
-   disk_read_block (0, 0);
+   disk_read_block (memory_get_page(0), 0);
 
    /* Set up IP.. */
    ipreg = machine_get_ipreg ();
@@ -89,9 +89,13 @@ machine_get_opcode (const char* instr)
    return XSM_ILLINSTR;
 }
 
-/* When the lexer calls, serve him with the instruction to execute. */
+/* When the lexer calls, serve him with the instruction to execute.
+ * Here we have a problem. The read_bytes need to be of type yy_size_t.
+ * If this argument raises an warning, then investigate what yy_size_t means,
+ * and change it here accordingly.
+ */
 int
-machine_serve_instruction (char *buffer, int *read_bytes, int max)
+machine_serve_instruction (char *buffer, unsigned long *read_bytes, int max)
 {
    int ip_val, i;
    xsm_word *ip_reg;
@@ -166,7 +170,7 @@ void
 machine_pre_execute()
 {
    /* Clear the potential watchpoint trigger. */
-   _thecpu.mem_write_addr = -1;
+   _thecpu.mem_low = -1;
 }
 
 int
@@ -519,8 +523,8 @@ machine_execute_mov ()
    switch (token)
    {
       case TOKEN_DREF_L:
-         mem_write_addr = machine_get_address_int (TRUE);
-         l_address = machine_memory_get_word(_thecpu.mem_write_addr);
+         _thecpu.mem_low = machine_get_address_int (TRUE);
+         l_address = machine_memory_get_word(_thecpu.mem_low);
          break;
 
       case TOKEN_REGISTER:

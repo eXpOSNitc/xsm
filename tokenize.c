@@ -64,5 +64,5 @@ tokenize_close ()
 void
 tokenize_clear_stream ()
 {
-	//YY_FLUSH_BUFFER;
+	lexer_buffer_reset ();
 }
