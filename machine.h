@@ -57,7 +57,7 @@
 #define IRET      33
 #define HALT      34
 
-#define XSM_INSTRUCTION_COUNT 34
+#define XSM_INSTRUCTION_COUNT 35
 
 #define XSM_DISKOP_LOAD 0
 #define XSM_DISKOP_STORE 1
@@ -67,6 +67,8 @@
 
 /* -1 is the number of exception handler *interrupt* */
 #define XSM_INTERRUPT_EXHANDLER -1
+
+#define XSM_HALT 1654
 
 typedef
 struct _disk_operation
@@ -233,6 +235,12 @@ machine_execute_print_do (xsm_word *word);
 
 int
 machine_execute_print ();
+
+int
+machine_schedule_in(int firetime);
+
+int
+machine_execute_ini ();
 
 int
 machine_execute_in_do (xsm_word *word);

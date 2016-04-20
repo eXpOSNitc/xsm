@@ -29,7 +29,9 @@
 }
 
 \"[^"]* {
-   yylval.str = yytext;
+   /* Hack! */
+   yylval.str = yytext + 1;
+   yytext[yyleng] = '\0';
    return TOKEN_STRING;
 }
 
@@ -60,7 +62,7 @@ R[0-9]+ {
    return TOKEN_REGISTER;
 }
 
-[a-zA-Z] {
+[a-zA-Z]+ {
    yylval.str = yytext;
    return TOKEN_INSTRUCTION;
 }

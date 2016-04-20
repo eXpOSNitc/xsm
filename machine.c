@@ -72,6 +72,8 @@ machine_init (xsm_options *options)
    ipreg = machine_get_ipreg ();
    word_store_integer(ipreg, 0);
 
+   machine_set_mode(PRIVILEGE_KERNEL);
+
    return XSM_SUCCESS;
 }
 
@@ -148,7 +150,7 @@ machine_memory_get_word (int address)
    {
       /* Doomsday! */
       exception_set_ma(address);
-      machine_register_exception("Illegal memory access.", EXP_ILLMEM);
+      machine_register_exception("Illegal memory access", EXP_ILLMEM);
    }
 
    return result;
@@ -212,7 +214,14 @@ machine_run ()
       }
 
       opcode = machine_get_opcode(token_info.str);
-      machine_execute_instruction (opcode);
+
+      if (XSM_ILLINSTR == opcode)
+      {
+         machine_register_exception("The instruction is not available in this architecture", EXP_ILLINSTR);
+      }
+
+      if (XSM_HALT == machine_execute_instruction (opcode))
+         break;
 
       /* TODO: Post executing instruction. */
       machine_post_execute ();
@@ -264,6 +273,8 @@ machine_handle_exception()
 
    fprintf (stderr, "%s: System halted.\n", message);
    /* TODO May print the machine status if required. */
+   fprintf (stderr, "Trace:\nEIP %s\tEPN %s\t EC %s\t EMA %s\n",
+      word_get_string(reg_eip), word_get_string(reg_epn), word_get_string(reg_ec), word_get_string(reg_ema));
    return XSM_FAILURE;
 }
 
@@ -410,9 +421,21 @@ machine_execute_instruction (int opcode)
          machine_execute_restore ();
          break;
 
+      case IN:
+         machine_schedule_in (_theoptions.console);
+         break;
+
+      case INI:
+         machine_execute_ini ();
+         break;
+
+      case OUT:
+         machine_execute_print ();
+         break;
+
       case HALT:
          printf ("System halted.\n");
-         return TRUE;
+         return XSM_HALT;
    }
 
    return TRUE;
@@ -1100,14 +1123,35 @@ int
 machine_execute_print ()
 {
    int val;
-   int token;
-   YYSTYPE token_info;
    xsm_word *reg;
 
-   token = tokenize_next_token(&token_info);
-   reg = registers_get_register (token_info.str);
+   reg = registers_get_register ("P1");
 
    return machine_execute_print_do(reg);
+}
+
+/* Schedule a read operation. */
+int
+machine_schedule_in(int firetime)
+{
+   if (_thecpu.console_state == XSM_CONSOLE_BUSY)
+      return XSM_FAILURE;
+
+   _thecpu.console_op.operation = XSM_CONSOLE_READ;
+
+   _thecpu.console_state = XSM_CONSOLE_BUSY;
+   _thecpu.console_wait = firetime;
+
+   return XSM_SUCCESS;
+}
+
+int
+machine_execute_ini ()
+{
+   xsm_word *reg;
+
+   reg = registers_get_register ("P0");
+   return machine_execute_in_do(reg);
 }
 
 int
