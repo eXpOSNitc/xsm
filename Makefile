@@ -2,6 +2,8 @@
 CC = cc
 CFLAGS = -g
 LEX = lex
+RM = rm
+RMFLAGS = -v
 
 default: xsm
 
@@ -43,3 +45,7 @@ exception.o: exception.c exception.h
 
 debug.o: debug.c debug.h
 	$(CC) $(CFLAGS) -c debug.c
+
+clean:
+	$(RM) $(RMFLAGS) *.o
+	$(RM) $(RMFLAGS) xsm

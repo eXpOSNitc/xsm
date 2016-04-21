@@ -10,6 +10,12 @@ xsm_reg *_registers;
 static
 xsm_reg *_zero_register;
 
+#define REG_PORT_LOW 20
+#define REG_PORT_HIGH 23
+
+#define REG_KERN_LOW 27
+#define REG_KERN_HIGH 32
+
 static
 const
 char *_register_names[] = {
@@ -70,17 +76,29 @@ registers_init ()
    return XSM_SUCCESS;   
 }
 
-xsm_reg*
-registers_get_register (const char *name)
+int
+registers_get_register_code (const char *name)
 {
    register int i;
    
    for (i = 0; i < XSM_NUM_REG; ++i)
    {
       if (!strcasecmp(name, _register_names[i]))
-         return &_registers[i];
+         return i;
    }
    
+   return -1;
+}
+
+xsm_word*
+registers_get_register(const char *name)
+{
+   int code;
+
+   code = registers_get_register_code(name);
+
+   if (code > -1)
+      return &_registers[code];
    return NULL;
 }
 
@@ -147,4 +165,29 @@ registers_store_string(const char *name, char *str)
 
    reg = registers_get_register(name);
    return word_store_string(reg, str);
+}
+
+int
+registers_umode(const char *reg)
+{
+   int code;
+
+   code = registers_get_register_code(reg);
+
+   if (code < 0)
+   {
+      return FALSE;
+   }
+   
+   if (code >= REG_PORT_LOW && code <= REG_PORT_HIGH)
+   {
+      return FALSE;
+   }
+
+   if (code >= REG_KERN_LOW && code <= REG_KERN_LOW)
+   {
+      return FALSE;
+   }
+
+   return TRUE;
 }

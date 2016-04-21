@@ -48,6 +48,9 @@ xsm_reg;
 int
 registers_init ();
 
+int
+registers_get_register_code (const char *name);
+
 xsm_reg*
 registers_get_register (const char *name);
 
@@ -75,5 +78,8 @@ registers_store_integer (const char *name, int val);
 
 int
 registers_store_string(const char *name, char *str);
+
+int
+registers_umode(const char *reg);
 
 #endif

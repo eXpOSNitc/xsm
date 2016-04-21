@@ -44,7 +44,8 @@
 #define RET       20
 #define BRKP      21
 #define INT       22
-#define LOADI     23
+
+#define LOADI     23 
 #define LOAD      24
 #define STORE     25
 #define ENCRYPT   26
@@ -56,6 +57,10 @@
 #define OUT       32
 #define IRET      33
 #define HALT      34
+
+/* Between these values are the privileged instructions. */
+#define TOKEN_KERN_LOW 23
+#define TOKEN_KERN_HIGH 34
 
 #define XSM_INSTRUCTION_COUNT 35
 
@@ -259,5 +264,11 @@ machine_pre_execute ();
 
 int
 machine_get_mode ();
+
+xsm_word*
+machine_get_register (const char *name);
+
+int
+machine_instr_req_privilege (int opcode);
 
 #endif

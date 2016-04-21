@@ -97,7 +97,7 @@ machine_get_opcode (const char* instr)
 
 /* When the lexer calls, serve him with the instruction to execute.
  * Here we have a problem. The read_bytes need to be of type yy_size_t.
- * If this argument raises an warning, then investigate what yy_size_t means,
+ * If this argument raises a warning, then investigate what yy_size_t means,
  * and change it here accordingly.
  */
 int
@@ -180,6 +180,14 @@ machine_pre_execute()
 }
 
 int
+machine_instr_req_privilege (int opcode)
+{
+   if (opcode >= TOKEN_KERN_LOW && TOKEN_KERN_HIGH >= opcode)
+      return PRIVILEGE_KERNEL;
+   return PRIVILEGE_USER;
+}
+
+int
 machine_run ()
 {
    int token, opcode;
@@ -222,6 +230,12 @@ machine_run ()
       if (XSM_ILLINSTR == opcode)
       {
          machine_register_exception("The instruction is not available in this architecture", EXP_ILLINSTR);
+      }
+
+      if (machine_instr_req_privilege(opcode) == PRIVILEGE_KERNEL &&
+         machine_get_mode() == PRIVILEGE_USER)
+      {
+         machine_register_exception("This instruction requires more privilege.", EXP_ILLINSTR);
       }
 
       if (XSM_HALT == machine_execute_instruction (opcode))
@@ -450,6 +464,38 @@ machine_get_mode ()
    return _thecpu.mode;
 }
 
+xsm_word*
+machine_get_register (const char *name)
+{
+   int mode;
+   xsm_word *reg;
+
+   mode = machine_get_mode();
+
+   if (PRIVILEGE_USER == mode)
+   {
+      if (!registers_umode(name))
+      {
+         /* This register in not available in user mode. */
+         machine_register_exception("Operand not available", EXP_ILLINSTR);
+      }
+   }
+
+   if (!strcasecmp(name, "IP"))
+   {
+      machine_register_exception("IP register can not be directly manipulated", EXP_ILLINSTR);
+   }
+
+   reg = registers_get_register(name);
+
+   if (!reg)
+   {
+      machine_register_exception("No such register", EXP_ILLINSTR);
+   }
+
+   return reg;
+}
+
 int
 machine_execute_logical (int opcode)
 {
@@ -460,13 +506,13 @@ machine_execute_logical (int opcode)
 
    /* TODO: Sure about this order? */
    token = tokenize_next_token(&token_info);
-   dest_reg = registers_get_register(token_info.str);
+   dest_reg = machine_get_register(token_info.str);
 
    token = tokenize_next_token(&token_info);
-   src_left_reg = registers_get_register(token_info.str);
+   src_left_reg = machine_get_register(token_info.str);
 
    token = tokenize_next_token(&token_info);
-   src_right_reg = registers_get_register(token_info.str);
+   src_right_reg = machine_get_register(token_info.str);
 
    val_left = word_get_integer(src_left_reg);
    val_right = word_get_integer(src_right_reg);
@@ -518,7 +564,7 @@ machine_execute_unary (int opcode)
    int val;
 
    token = tokenize_next_token(&token_info);
-   arg_reg = registers_get_register(token_info.str);
+   arg_reg = machine_get_register(token_info.str);
 
    val = word_get_integer(arg_reg);
 
@@ -554,7 +600,7 @@ machine_execute_mov ()
          break;
 
       case TOKEN_REGISTER:
-         l_address = registers_get_register (token_info.str);
+         l_address = machine_get_register (token_info.str);
          token = tokenize_next_token (&token_info);
          break;
    }
@@ -576,7 +622,7 @@ machine_execute_mov ()
          break;
 
       case TOKEN_REGISTER:
-         r_address = registers_get_register(token_info.str);
+         r_address = machine_get_register(token_info.str);
          word_copy (l_address, r_address);
          tokenize_next_token(&token_info);
          break;
@@ -623,7 +669,7 @@ machine_get_address_int (int write)
    {
       case TOKEN_REGISTER:
       {
-         xsm_reg *reg = registers_get_register (token_info.str);
+         xsm_reg *reg = machine_get_register (token_info.str);
          address = word_get_integer (reg);
       }
       break;
@@ -648,7 +694,7 @@ machine_get_address_int (int write)
    {
       case TOKEN_REGISTER:
       {
-         xsm_reg *reg = registers_get_register (token_info.str);
+         xsm_reg *reg = machine_get_register (token_info.str);
          address = address + word_get_integer(reg);
       }
       break;
@@ -701,7 +747,7 @@ machine_execute_arith (int opcode)
    if (token != TOKEN_REGISTER)
       machine_register_exception("Wrong operand.", EXP_ILLINSTR);
 
-   l_operand = registers_get_register(token_info.str);
+   l_operand = machine_get_register(token_info.str);
    l_value = word_get_integer(l_operand);
 
    /* Next one is a comma, neglect. */
@@ -715,7 +761,7 @@ machine_execute_arith (int opcode)
    }
    else
    {
-      r_operand = registers_get_register(token_info.str);
+      r_operand = machine_get_register(token_info.str);
       r_value = word_get_integer (r_operand);
    }
 
@@ -767,7 +813,7 @@ machine_execute_jump (int opcode)
    }
    else 
    {
-      test = word_get_integer(registers_get_register(token_info.str));
+      test = word_get_integer(machine_get_register(token_info.str));
       /* Skip the comma. */
       tokenize_next_token(&token_info);
       token = tokenize_next_token(&token_info);
@@ -803,7 +849,7 @@ machine_execute_stack (int opcode)
 
    if (token == TOKEN_REGISTER)
    {
-      reg = registers_get_register(token_info.str);
+      reg = machine_get_register(token_info.str);
    }
    else
    {
@@ -1091,7 +1137,7 @@ machine_execute_encrypt ()
    xsm_word *reg;
 
    token = tokenize_next_token(&token_info);
-   reg = registers_get_register(token_info.str);
+   reg = machine_get_register(token_info.str);
 
    /* Some very easy encryption. */
    word_encrypt (reg);
