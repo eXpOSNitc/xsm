@@ -40,4 +40,7 @@
 #define XSM_INTERRUPT_DISK 2
 #define XSM_INTERRUPT_CONSOLE 3
 
+#define _input_
+#define _output_
+
 #endif

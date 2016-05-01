@@ -65,6 +65,9 @@ machine_init (xsm_options *options)
    if (!memory_init())
       return XSM_FAILURE;
 
+   if (!debug_init())
+      return FALSE;
+
    /* Load the boot code onto the memory.. */
    disk_read_block (memory_get_page(0), 0);
 
@@ -100,8 +103,9 @@ machine_get_opcode (const char* instr)
  * If this argument raises a warning, then investigate what yy_size_t means,
  * and change it here accordingly.
  */
+ 
 int
-machine_serve_instruction (char *buffer, unsigned long *read_bytes, int max)
+machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_bytes, int _input_ max)
 {
    int ip_val, i;
    xsm_word *ip_reg;
@@ -246,6 +250,14 @@ machine_run ()
    }
 
    return TRUE;
+}
+
+/* Return the memory range accessed by the CPU for the last operation. */
+void
+machine_get_mem_access (int _output_ *mem_low, int _output_ *mem_high)
+{
+   *mem_low = _thecpu.mem_low;
+   *mem_high = _thecpu.mem_high;
 }
 
 int
@@ -789,6 +801,11 @@ machine_execute_arith (int opcode)
          break;
 
       case MOD:
+
+         if (0 == r_value)
+         {
+            machine_register_exception("Integer modulus 0.", EXP_ARITH);
+         }
          result = l_value / r_value;
          break;
    }

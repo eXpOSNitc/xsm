@@ -102,7 +102,21 @@ debug_watch_test (int mem_min, int mem_max)
 int
 debug_next_step (int curr_ip)
 {
+	int mem_low, mem_high;
+	int wp = DEBUG_ERROR;
+
 	_db_status.ip = curr_ip;
+
+	machine_get_mem_access (&mem_low, &mem_high);
+
+	if (mem_low > 0)
+		wp = debug_watch_test(mem_low, mem_high);
+
+	if (wp > 0)
+	{
+		printf ("Watchpoint at %d has triggered the debugger.\n", _db_status.wp[wp]);
+		_db_status.state = ON;
+	}
 
 	if (_db_status.state == ON)
 	{
