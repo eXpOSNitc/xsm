@@ -7,7 +7,7 @@ xsm_exception
 _exception;
 
 int
-exception_set (char *restrict message, int exptype, int mode)
+exception_set (char *message, int exptype, int mode)
 {
 	_exception.message = message;
 	_exception.type = exptype;

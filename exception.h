@@ -22,7 +22,7 @@ struct _xsm_exception
 xsm_exception;
 
 int
-exception_set (char *restrict message, int exp_type, int mode);
+exception_set (char* message, int exp_type, int mode);
 
 void
 exception_set_ma (int address);

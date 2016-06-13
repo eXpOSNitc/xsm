@@ -137,7 +137,7 @@ machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_b
 
 /* Raises an exception. This function never returns. */
 void
-machine_register_exception (char *restrict message, int code)
+machine_register_exception (char* message, int code)
 {
    int mode;
 
@@ -1224,9 +1224,16 @@ int
 machine_execute_in_do (xsm_word *word)
 {
    char input[XSM_WORD_SIZE];
+   int i;
 
    /*TODO: Be a bit careful here. */
    fgets (input, XSM_WORD_SIZE, stdin);
+
+   /* Kill the extra newline. */
+   for (i = 0; i < XSM_WORD_SIZE; ++i)
+      if (input[i] == '\n')
+         input[i] = '\0';
+      
    return word_store_string(word, input);
 }
 
