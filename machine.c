@@ -68,8 +68,9 @@ machine_init (xsm_options *options)
    if (!debug_init())
       return FALSE;
 
-   /* Load the boot code onto the memory.. */
-   disk_read_block (memory_get_page(0), 0);
+   /* Initialize machine. */
+   word_store_string(memory_get_word(0), "LOAD 1, 0");
+   word_store_string(memory_get_word(1), "JMP 512");
 
    /* Set up IP.. */
    ipreg = machine_get_ipreg ();
