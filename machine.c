@@ -70,11 +70,13 @@ machine_init (xsm_options *options)
 
    /* Initialize machine. */
    word_store_string(memory_get_word(0), "LOAD 1, 0");
-   word_store_string(memory_get_word(1), "JMP 512");
+   word_store_string(memory_get_word(2), "JMP 512");
+
+   disk_read_block(memory_get_page(1), 0);
 
    /* Set up IP.. */
    ipreg = machine_get_ipreg ();
-   word_store_integer(ipreg, 0);
+   word_store_integer(ipreg, 512);
 
    machine_set_mode(PRIVILEGE_KERNEL);
 
@@ -512,17 +514,21 @@ machine_get_register (const char *name)
 int
 machine_execute_logical (int opcode)
 {
-   xsm_word *dest_reg, *src_left_reg, *src_right_reg;
+   xsm_word *src_left_reg, *src_right_reg;
    int token;
    YYSTYPE token_info;
    int result, val_left, val_right;
 
-   /* TODO: Sure about this order? */
-   token = tokenize_next_token(&token_info);
-   dest_reg = machine_get_register(token_info.str);
-
    token = tokenize_next_token(&token_info);
    src_left_reg = machine_get_register(token_info.str);
+
+   /* Comma */
+   token = tokenize_next_token(&token_info);
+
+   if (TOKEN_COMMA != token)
+   {
+      machine_register_exception("Incorrect logical instruction.", EXP_ILLINSTR);
+   }
 
    token = tokenize_next_token(&token_info);
    src_right_reg = machine_get_register(token_info.str);
@@ -557,7 +563,7 @@ machine_execute_logical (int opcode)
          break;
    }
 
-   word_store_integer(dest_reg, result);
+   word_store_integer(src_left_reg, result);
    return XSM_SUCCESS;
 }
 
@@ -641,7 +647,7 @@ machine_execute_mov ()
          break;
 
       case TOKEN_NUMBER:
-         word_store_integer (l_address, atoi(token_info.str));
+         word_store_integer (l_address, token_info.val);
          tokenize_next_token(&token_info);
          break;
 
@@ -807,7 +813,7 @@ machine_execute_arith (int opcode)
          {
             machine_register_exception("Integer modulus 0.", EXP_ARITH);
          }
-         result = l_value / r_value;
+         result = l_value % r_value;
          break;
    }
 
