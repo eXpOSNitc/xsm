@@ -36,6 +36,15 @@ tokenize_next_token (YYSTYPE *token_info)
 	}
 }
 
+/* Skips the next token. */
+int
+tokenize_skip_token()
+{
+	YYSTYPE token_info;
+
+	return tokenize_next_token(&token_info);
+}
+
 int
 tokenize_peek (YYSTYPE *token_info)
 {

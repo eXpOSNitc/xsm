@@ -1091,19 +1091,44 @@ machine_set_mode (int mode)
 }
 
 int
+machine_read_disk_arg()
+{
+   YYSTYPE token_info;
+   int token;
+
+   token = tokenize_next_token(&token_info);
+
+   if (token == TOKEN_NUMBER)
+   {
+      return token_info.val;
+   }
+   else if (token == TOKEN_REGISTER){
+      xsm_word *reg;
+
+      reg = machine_get_register(token_info.str);
+      return word_get_integer(reg);
+   }
+   else{
+      machine_register_exception("Wrong arguments for load instruction", EXP_ILLINSTR);
+   }
+
+   /* This instruction is never going to be executed. */
+   return 0;
+}
+
+int
 machine_execute_disk (int operation, int immediate)
 {
-   int token;
-   YYSTYPE token_info;
    int page_num;
    int block_num;
    xsm_word *page_base;
 
-   token = tokenize_next_token(&token_info);
-   page_num = token_info.val;
+   page_num = machine_read_disk_arg();
 
-   token = tokenize_next_token(&token_info);
-   block_num = token_info.val;
+   /* Comma, neglect */
+   tokenize_skip_token();
+
+   block_num = machine_read_disk_arg();
 
    if (immediate)
    {

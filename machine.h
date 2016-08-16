@@ -274,4 +274,7 @@ machine_instr_req_privilege (int opcode);
 void
 machine_get_mem_access (int _output_ *mem_low, int _output_ *mem_high);
 
+int
+machine_read_disk_arg();
+
 #endif

@@ -15,6 +15,9 @@ int
 tokenize_peek (YYSTYPE *token_info);
 
 int
+tokenize_skip_token();
+
+int
 tokenize_close ();
 
 void
