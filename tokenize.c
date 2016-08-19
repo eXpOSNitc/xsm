@@ -71,6 +71,12 @@ tokenize_close ()
 }
 
 void
+tokenize_reset ()
+{
+	_la_exists = FALSE;
+}
+
+void
 tokenize_clear_stream ()
 {
 	lexer_buffer_reset ();

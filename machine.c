@@ -217,6 +217,7 @@ machine_run ()
 
       /* Flush the instruction stream. */
       tokenize_clear_stream ();
+      tokenize_reset ();
 
       machine_pre_execute ();
 
@@ -715,11 +716,13 @@ machine_get_address_int (int write)
       {
          xsm_reg *reg = machine_get_register (token_info.str);
          address = address + word_get_integer(reg);
+         tokenize_next_token(&token_info);
       }
       break;
 
       case TOKEN_NUMBER:
          address = address + token_info.val;
+         tokenize_next_token(&token_info);
          break;
    }
 
@@ -1109,7 +1112,7 @@ machine_read_disk_arg()
       return word_get_integer(reg);
    }
    else{
-      machine_register_exception("Wrong arguments for load instruction", EXP_ILLINSTR);
+      machine_register_exception("Wrong arguments for disk instruction", EXP_ILLINSTR);
    }
 
    /* This instruction is never going to be executed. */

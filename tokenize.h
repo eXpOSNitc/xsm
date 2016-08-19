@@ -21,6 +21,9 @@ int
 tokenize_close ();
 
 void
+tokenize_reset ();
+
+void
 tokenize_clear_stream ();
 
 /* Clang rigorously follows C99 standard. */
