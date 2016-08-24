@@ -467,6 +467,10 @@ machine_execute_instruction (int opcode)
          machine_execute_print ();
          break;
 
+      case IRET:
+         machine_execute_iret ();
+         break;
+
       case HALT:
          return XSM_HALT;
    }
