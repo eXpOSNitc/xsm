@@ -1085,10 +1085,10 @@ machine_execute_interrupt_do (int interrupt)
 int
 machine_interrupt_address (int int_num)
 {
-   if (int_num < -1 || int_num > 18)
+   if (int_num < 0 || int_num > 18)
       return -1; /* Not supposed to happen. */
 
-   return (int_num * 2 + 4) * XSM_PAGE_SIZE;
+   return (int_num * 2 + 2) * XSM_PAGE_SIZE;
 }
 
 void

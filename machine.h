@@ -71,7 +71,7 @@
 #define XSM_CONSOLE_READ 1
 
 /* -1 is the number of exception handler *interrupt* */
-#define XSM_INTERRUPT_EXHANDLER -1
+#define XSM_INTERRUPT_EXHANDLER 0
 
 #define XSM_HALT 1654
 

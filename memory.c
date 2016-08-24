@@ -61,7 +61,7 @@ memory_translate_address (int ptbr, int address, int write)
    if (target_page < 0)
       return target_page;
 
-   return target_page + offset;
+   return target_page * XSM_PAGE_SIZE + offset;
 }
 
 void
