@@ -907,12 +907,16 @@ machine_push_do (xsm_word *reg)
    xsm_word *sp_reg;
    int stack_top;
 
-   xw_stack_top = machine_stack_pointer (FALSE);
+   /* Update SP */
    sp_reg = registers_get_register("SP");
    stack_top = word_get_integer(sp_reg);
-
-   word_copy (xw_stack_top, reg);
    word_store_integer(sp_reg, stack_top + 1);
+
+   /* Get the new stack pointer. */
+   xw_stack_top = machine_stack_pointer (FALSE);
+
+   /* Put the word on the top of stack. */
+   word_copy (xw_stack_top, reg);
    return XSM_SUCCESS;
 }
 
@@ -954,17 +958,21 @@ machine_execute_call_do (int target)
    xsm_word *stack_pointer;
    xsm_word *spreg;
 
+   /* Increment SP. */
+   spreg = registers_get_register("SP");
+   curr_sp = word_get_integer(spreg);
+   curr_sp = curr_sp + 1;
+   word_store_integer(spreg, curr_sp);
+
+   /* Save IP onto the stack. */
    ipreg = registers_get_register("IP");
    curr_ip = word_get_integer(ipreg);
-
    stack_pointer = machine_stack_pointer (TRUE);
    word_store_integer(stack_pointer, curr_ip + XSM_INSTRUCTION_SIZE);
 
-   spreg = registers_get_register("SP");
-   curr_sp = word_get_integer(spreg);
-   word_store_integer(spreg, curr_sp + 1);
-
+   /* Update IP to the new code location. */
    word_store_integer (ipreg, target);
+
    return XSM_SUCCESS;
 }
 
