@@ -10,6 +10,16 @@ xsm_options _options;
 static
 const char *XSM_DEFAULT_DISK = "../xfs-interface/disk.xfs";
 
+/* By default, assign 20 ticks. */
+static
+const int XSM_TIMER_DURATION = 20;
+
+static
+const int XSM_DISK_DURATION = 20;
+
+static
+const int XSM_CONSOLE_DURATION = 20;
+
 int
 simulator_run ()
 {
@@ -39,7 +49,10 @@ simulator_parse_args(int argc, char **argv)
 	argv++;
 	argc --;
 
-	/* TODO: Initialize with default values. */
+	/* Initialize with default values. */
+	_options.timer = XSM_TIMER_DURATION;
+	_options.console = XSM_CONSOLE_DURATION;
+	_options.disk = XSM_DISK_DURATION;
 
 	while (argc > 0)
 	{
