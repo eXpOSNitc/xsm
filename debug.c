@@ -623,6 +623,13 @@ debug_display_inodetable ()
 	return TRUE;
 }
 
+void
+debug_activate ()
+{
+	/* Activate the debugger. */
+	_db_status.state = ON;
+}
+
 int
 debug_display_usertable()
 {

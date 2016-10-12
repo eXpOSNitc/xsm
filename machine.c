@@ -180,10 +180,16 @@ machine_get_spreg ()
 }
 
 void
-machine_pre_execute()
+machine_pre_execute(int ip_val)
 {
    /* Clear the potential watchpoint trigger. */
    _thecpu.mem_low = -1;
+
+   /* If debugging was requested, activate the debug command line. */
+   if (_theoptions.debug)
+   {
+      debug_next_step (ip_val);
+   }
 }
 
 int
@@ -219,12 +225,12 @@ machine_run ()
       tokenize_clear_stream ();
       tokenize_reset ();
 
-      machine_pre_execute ();
+      ipval = word_get_integer(ipreg);
+      machine_pre_execute (ipval);
 
       token = tokenize_next_token (&token_info);
 
       /* IP = IP + instruction length. */
-      ipval = word_get_integer(ipreg);
       ipval = ipval + XSM_INSTRUCTION_SIZE;
       word_store_integer (ipreg, ipval);
 
@@ -576,6 +582,11 @@ int
 machine_execute_brkp ()
 {
    /* TODO: Initiate debugger. */
+
+   /* If debug mode is not enabled, neglect this instruction. */
+   if (!_theoptions.debug)
+      return XSM_SUCCESS;
+
    return XSM_SUCCESS;
 }
 
@@ -620,6 +631,7 @@ machine_execute_mov ()
    {
       case TOKEN_DREF_L:
          _thecpu.mem_low = machine_get_address_int (TRUE);
+         _thecpu.mem_high = _thecpu.mem_high;
          l_address = machine_memory_get_word(_thecpu.mem_low);
          break;
 
