@@ -897,6 +897,7 @@ machine_execute_stack (int opcode)
    else
    {
       /* TODO Invalid argument, raise exception. */
+      machine_register_exception("Stack instructions require a register as argument.", EXP_ILLINSTR);
 
    }
 
