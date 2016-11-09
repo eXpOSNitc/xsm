@@ -142,7 +142,7 @@ debug_show_interface ()
 		fgets (command, DEBUG_COMMAND_LEN, stdin);
 
 		// remove the dangling \n from fgets
-		strtok(Name, "\n");
+		strtok(command, "\n");
 
 		if (!strcmp(command, "exit") || !strcmp(command, "e")){
 			debug_deactivate();
