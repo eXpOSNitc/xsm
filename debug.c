@@ -148,7 +148,12 @@ debug_show_interface ()
 			debug_deactivate();
 			return FALSE;
 		}
+		
 		done = debug_command (command);
+		
+		if(done == FALSE)
+			printf("Unknown command \"%s\". See \"help\" for more information.\n",command);
+			
 	}
 
 	return TRUE;
@@ -241,9 +246,12 @@ debug_command(char *command)
 		case DEBUG_INODETABLE:
 			debug_display_inodetable();
 			break;	
+		
+		default:
+			return FALSE;
 	}
 
-	return FALSE;
+	return TRUE;
 }
 
 int
