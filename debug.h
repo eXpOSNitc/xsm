@@ -72,6 +72,13 @@ struct _debug_status
 debug_status;
 
 /* Function prototypes. */
+
+void
+debug_activate ();
+
+void
+debug_deactivate ();
+
 int
 debug_init ();
 

@@ -141,9 +141,10 @@ debug_show_interface ()
 	{
 		fgets (command, DEBUG_COMMAND_LEN, stdin);
 
-		if (!strcmp(command, "exit") || !strcmp(command, "e"))
+		if (!strcmp(command, "exit") || !strcmp(command, "e")){
+			debug_deactivate();
 			return FALSE;
-
+		}
 		done = debug_command (command);
 	}
 
@@ -168,7 +169,7 @@ debug_command(char *command)
 			return TRUE;
 
 		case DEBUG_CONTINUE:
-			_db_status.state = OFF;
+			debug_deactivate();
 			return TRUE;
 
 		case DEBUG_REG:
@@ -628,6 +629,13 @@ debug_activate ()
 {
 	/* Activate the debugger. */
 	_db_status.state = ON;
+}
+
+void
+debug_deactivate ()
+{
+	/* Activate the debugger. */
+	_db_status.state = OFF;
 }
 
 int

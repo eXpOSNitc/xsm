@@ -587,6 +587,11 @@ machine_execute_brkp ()
    if (!_theoptions.debug)
       return XSM_SUCCESS;
 
+	/* activate the debug mode 
+		deactivated on pressing e or s in debug interface.
+	*/
+	debug_activate();
+	
    return XSM_SUCCESS;
 }
 
