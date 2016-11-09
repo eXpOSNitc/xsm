@@ -242,6 +242,10 @@ debug_command(char *command)
 		case DEBUG_MEMFREELIST:
 			debug_display_memlist();
 			break;
+			
+		case DEBUG_DISKFREELIST:
+			debug_display_dfl();
+			break;
 
 		case DEBUG_INODETABLE:
 			debug_display_inodetable();
