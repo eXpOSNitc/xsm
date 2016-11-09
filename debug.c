@@ -148,7 +148,12 @@ debug_show_interface ()
 			debug_deactivate();
 			return FALSE;
 		}
+		
 		done = debug_command (command);
+		
+		if(done == FALSE)
+			printf("Unknown command \"%s\". See \"help\" for more information.\n",command);
+			
 	}
 
 	return TRUE;
@@ -238,16 +243,15 @@ debug_command(char *command)
 			debug_display_memlist();
 			break;
 
-		case DEBUG_DISKFREELIST:
-			debug_display_dfl();
-			break;
-
 		case DEBUG_INODETABLE:
 			debug_display_inodetable();
 			break;	
+		
+		default:
+			return FALSE;
 	}
 
-	return FALSE;
+	return TRUE;
 }
 
 int
