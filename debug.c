@@ -17,7 +17,7 @@ char *_db_commands_lh[] = {
 	"pcb",
 	"pagetable",
 	"filetable",
-	"memfreelist"
+	"memfreelist",
 	"diskfreelist",
 	"inodetable",
 	"usertable",
