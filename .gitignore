@@ -2,3 +2,4 @@
 .DS_Store
 *.o
 xsm
+lex.yy.c
