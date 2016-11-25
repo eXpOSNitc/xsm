@@ -125,8 +125,6 @@ machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_b
    instr_mem = machine_memory_get_word(ip_val);
    
    memcpy (buffer, instr_mem->val, bytes_to_read);
-
-   instr_mem = machine_memory_get_word(ip_val+1);
    
    /* Trim. */
    for (i = 0; i < bytes_to_read; ++i)
