@@ -84,6 +84,10 @@ machine_init (xsm_options *options)
    _thecpu.console_state = XSM_CONSOLE_IDLE;
    _thecpu.disk_state = XSM_DISK_IDLE;
 
+   /* Initialise timer clock*/
+   
+   _thecpu.timer = _theoptions.timer;
+   
    return XSM_SUCCESS;
 }
 
@@ -258,8 +262,13 @@ machine_run ()
       if (XSM_HALT == machine_execute_instruction (opcode))
          break;
 
-      /* TODO: Post executing instruction. */
-      machine_post_execute ();
+      /* Post executing instruction. 
+			Enabled Only in User mode
+       */
+       
+       if( machine_get_mode() == PRIVILEGE_USER)
+			machine_post_execute ();
+   
    }
 
    return TRUE;
@@ -326,7 +335,7 @@ machine_post_execute ()
 {
    /* Tick the timers. */
    _thecpu.timer--;
-
+   
    if (_thecpu.timer == 0)
    {
       machine_execute_interrupt_do(XSM_INTERRUPT_TIMER);
