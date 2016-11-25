@@ -326,7 +326,7 @@ machine_post_execute ()
 
    if (_thecpu.timer == 0)
    {
-      machine_execute_interrupt(XSM_INTERRUPT_TIMER);
+      machine_execute_interrupt_do(XSM_INTERRUPT_TIMER);
       _thecpu.timer = _theoptions.timer;
    }
    /* Handle the disk interrupt. */
