@@ -450,11 +450,11 @@ machine_execute_instruction (int opcode)
          break;
 
       case LOAD:
-         machine_execute_disk (XSM_DISKOP_LOAD, TRUE);
+         machine_execute_disk (XSM_DISKOP_LOAD, FALSE);
          break;
 
       case LOADI:
-         machine_execute_disk (XSM_DISKOP_LOAD, FALSE);
+         machine_execute_disk (XSM_DISKOP_LOAD, TRUE);
          break;
 
       case STORE:
@@ -1200,6 +1200,7 @@ machine_execute_store_do (int page_num, int block_num)
 int
 machine_schedule_disk (int page_num, int block_num, int firetime, int operation)
 {
+	
    /* If the disk is busy, just ignore the request. */
    if (_thecpu.disk_state == XSM_DISK_BUSY)
       return XSM_SUCCESS;
