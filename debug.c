@@ -342,6 +342,10 @@ debug_display_mem(int page)
 	int i, ptr;
 	char *content;
 
+	FILE *fp;
+	
+	fp = fopen("mem","w");
+	 
 	word = memory_get_page(page);
 
 	if (!word)
@@ -352,14 +356,19 @@ debug_display_mem(int page)
 
 	ptr = page * XSM_PAGE_SIZE;
 
+	// write to file mem
+	
 	for (i = 0; i < XSM_PAGE_SIZE; i++)
 	{
 		word = memory_get_word(ptr);
 		content = word_get_string(word);
-		printf("+%d: %s\n", i, content);
-		ptr++; /* ! */
+		fprintf(fp,"+%d: %s\n", i, content);
+		ptr++; 
 	}
-
+	
+	fclose(fp);
+	
+	printf("Written to file mem\n");
 	return TRUE;
 }
 

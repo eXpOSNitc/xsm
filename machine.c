@@ -978,7 +978,7 @@ machine_execute_call_do (int target)
    xsm_word *ipreg;
    xsm_word *stack_pointer;
    xsm_word *spreg;
-
+	
    /* Increment SP. */
    spreg = registers_get_register("SP");
    curr_sp = word_get_integer(spreg);
@@ -989,11 +989,11 @@ machine_execute_call_do (int target)
    ipreg = registers_get_register("IP");
    curr_ip = word_get_integer(ipreg);
    stack_pointer = machine_stack_pointer (TRUE);
-   word_store_integer(stack_pointer, curr_ip + XSM_INSTRUCTION_SIZE);
+   word_store_integer(stack_pointer, curr_ip);
 
    /* Update IP to the new code location. */
    word_store_integer (ipreg, target);
-
+   
    return XSM_SUCCESS;
 }
 
