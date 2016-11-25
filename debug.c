@@ -150,10 +150,6 @@ debug_show_interface ()
 		}
 		
 		done = debug_command (command);
-		
-		if(done == FALSE)
-			printf("Unknown command \"%s\". See \"help\" for more information.\n",command);
-			
 	}
 
 	return TRUE;
@@ -252,10 +248,10 @@ debug_command(char *command)
 			break;	
 		
 		default:
-			return FALSE;
+			printf("Unknown command \"%s\". See \"help\" for more information.\n",command);
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 int
