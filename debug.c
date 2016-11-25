@@ -133,7 +133,7 @@ debug_show_interface ()
 	int done = FALSE;
 	char next_instr[DEBUG_STRING_LEN];
 
-	memory_retrieve_raw_instr (next_instr, _db_status.ip);
+	memory_retrieve_raw_instr (next_instr, machine_translate_address(_db_status.ip,FALSE));
 
 	printf ("Next instruction to execute: %s\n", next_instr);
 
