@@ -110,6 +110,7 @@ machine_get_opcode (const char* instr)
 int
 machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_bytes, int _input_ max)
 {
+	
    int ip_val, i;
    xsm_word *ip_reg;
    int bytes_to_read;
@@ -122,19 +123,23 @@ machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_b
 
    ip_val = machine_translate_address(ip_val, FALSE);
    instr_mem = machine_memory_get_word(ip_val);
+   
+   memcpy (buffer, instr_mem->val, bytes_to_read);
 
-   memcpy (buffer, instr_mem, bytes_to_read);
-
+   instr_mem = machine_memory_get_word(ip_val+1);
+   
    /* Trim. */
    for (i = 0; i < bytes_to_read; ++i)
    {
-      if (buffer[i] == '\0')
-         buffer[i] = ' ';
+      if (buffer[i] == '\0'){
+         for(int j=i;j<bytes_to_read/2;j++)
+			buffer[j] = ' ';
+	 }
    }
 
    buffer[bytes_to_read - 1] = '\0';
    *read_bytes = bytes_to_read;
-
+	
    return TRUE;
 }
 
