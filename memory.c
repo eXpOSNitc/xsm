@@ -97,7 +97,7 @@ memory_translate_page (int ptbr, int page, int write)
    page_info = page_entry + 1;
 
    page_entry_w = memory_get_word (page_entry);
-   page_info_w = memory_get_word(page_entry);
+   page_info_w = memory_get_word(page_info);
 
    entry = word_get_integer (page_entry_w);
    info = word_get_string (page_info_w);
