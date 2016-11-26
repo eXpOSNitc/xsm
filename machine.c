@@ -489,7 +489,7 @@ machine_execute_instruction (int opcode)
          machine_execute_iret ();
          break;
 
-      case HALT:
+      case HALT:	
          return XSM_HALT;
    }
 
@@ -1008,7 +1008,7 @@ machine_execute_call_do (int target)
 
 int
 machine_execute_backup()
-{
+{	
    xsm_word *reg;
    int ireg;
    char str_reg[5];
@@ -1039,7 +1039,7 @@ machine_execute_restore ()
    int ireg;
    char str_reg[5];
 
-   for (ireg = 19; ireg >= 0; ireg--)
+   for (ireg = 18; ireg >= 0; ireg--)
    {
       sprintf (str_reg, "R%d", ireg);
       reg = registers_get_register(str_reg);
