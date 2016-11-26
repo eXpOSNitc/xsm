@@ -115,7 +115,7 @@ int
 machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_bytes, int _input_ max)
 {
 	
-   int ip_val, i;
+   int ip_val, i, j;
    xsm_word *ip_reg;
    int bytes_to_read;
    xsm_word *instr_mem;
@@ -134,7 +134,7 @@ machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_b
    for (i = 0; i < bytes_to_read; ++i)
    {
       if (buffer[i] == '\0'){
-         for(int j=i;j<bytes_to_read/2;j++)
+         for(j=i;j<bytes_to_read/2;j++)
 			buffer[j] = ' ';
 	 }
    }
