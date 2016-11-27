@@ -551,7 +551,7 @@ debug_display_pt_pid (int pid)
 	
 	int ptbr_addr;
 	
-	ptbr_addr = DEBUG_PT_BASE + pid * MAX_NUM_PAGES; 
+	ptbr_addr = DEBUG_PT_BASE + pid * MAX_NUM_PAGES * 2; 
 	return debug_display_pt_at(ptbr_addr);
 }
 
