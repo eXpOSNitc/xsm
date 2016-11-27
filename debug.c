@@ -521,27 +521,25 @@ debug_display_pt_ptbr ()
 int
 debug_display_pt_at (int addr)
 {
+		
 	int i, ptr;
-	const char *fields[] = {
-		"PHY", "REF", "VAL", "WRITE"
-	};
-	const int fields_len[] = {
-		1, 1, 1, 1
-	};
-
-	const int n_fields = 4;
-	const int entry_size = 4;
+	xsm_word *word;
 
 	ptr = addr;
 
-	for (i = 1; i <= MAX_NUM_PAGES; ++i)
+	for (i = 0; i < MAX_NUM_PAGES; ++i)
 	{
-		printf ("VIRT %d\t", i);
-		debug_display_fields(ptr, fields, fields_len, n_fields);
-		printf ("\n");
-
-		/* Each entry is of size 4. */
-		ptr = ptr + entry_size;
+		printf ("VIRT: %d\t\t", i);
+		
+		word = memory_get_word(ptr);
+		printf ("PHY: %s\t\t", word_get_string(word));
+	
+		ptr = ptr + 1;
+		
+		word = memory_get_word(ptr);
+		printf ("AUX: %s\t\n", word_get_string(word));
+		
+		ptr = ptr + 1;
 	}
 
 	return TRUE;
@@ -550,16 +548,11 @@ debug_display_pt_at (int addr)
 int
 debug_display_pt_pid (int pid)
 {
-	int pcb_base, ptbr_addr, addr;
-	xsm_word *word;
-
-	pcb_base = debug_pcb_base (pid);
-	ptbr_addr = pcb_base + PTBR_PCB_OFFSET;
-
-	word = memory_get_word(ptbr_addr);
-
-	addr = word_get_integer (word);
-	return debug_display_pt_at(addr);
+	
+	int ptbr_addr;
+	
+	ptbr_addr = DEBUG_PT_BASE + pid * MAX_NUM_PAGES; 
+	return debug_display_pt_at(ptbr_addr);
 }
 
 int
