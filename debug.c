@@ -587,7 +587,7 @@ debug_display_memlist()
 
 	ptr = DEBUG_LOC_MFL;
 
-	for (i = 1; i <= MAX_MEM_PAGE; ++i)
+	for (i = 0; i < MAX_MEM_PAGE; ++i)
 	{
 		word = memory_get_word(ptr++);
 		printf ("%d\t%s\n", i, word_get_string(word));
