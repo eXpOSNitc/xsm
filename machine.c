@@ -288,7 +288,7 @@ machine_handle_exception()
    char *message;
    int code, mode;
    int curr_ip;
-
+  
    xsm_word *reg_eip, *reg_epn, *reg_ec, *reg_ema;
 
    /* Get the details about the exception. */
@@ -302,10 +302,10 @@ machine_handle_exception()
    reg_ec = registers_get_register("EC");
    reg_ema = registers_get_register("EMA");
 
-   /* After the fetch, IP = IP + 2, undo.  */
-   curr_ip = word_get_integer(registers_get_register("IP")) - 2;
+   // fetch ip store in eip
+   curr_ip = word_get_integer(registers_get_register("IP"));
    word_store_integer(reg_eip, curr_ip);
-
+ 
    switch(mode)
    {
       case EXP_ILLMEM:
@@ -994,12 +994,13 @@ machine_execute_call_do (int target)
    curr_sp = curr_sp + 1;
    word_store_integer(spreg, curr_sp);
 
+
    /* Save IP onto the stack. */
    ipreg = registers_get_register("IP");
    curr_ip = word_get_integer(ipreg);
    stack_pointer = machine_stack_pointer (TRUE);
    word_store_integer(stack_pointer, curr_ip);
-
+	
    /* Update IP to the new code location. */
    word_store_integer (ipreg, target);
    
