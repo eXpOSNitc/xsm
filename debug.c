@@ -388,13 +388,14 @@ debug_display_mem_range (int page_l, int page_h)
 
 int
 debug_display_pcb_pid (int pid)
-{
+{	
 	const char *fields[] = {"Tick", "PID", "PPID", "UserID", "State", "Swap Flag", "Inode Index",
 	"Input Buffer", "Mode Flag", "User Area Swap Status", "User Area Page Number",
-	"Kernel Stack Pointer", "User Stack Pointer", "PTBR", "Unused"
+	"Kernel Stack Pointer", "User Stack Pointer", "PTBR", "PTLR", "Unused"
 	};
-	const int fields_len[] = {1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2};
-	const int n_fields = 14;
+	
+	const int fields_len[] = {1, 1, 1, 1 , 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+	const int n_fields = 15;
 	int ptr;
 
 	ptr = DEBUG_LOC_PT + pid * PT_ENTRY_SIZE;
@@ -408,9 +409,11 @@ debug_display_fields (int baseptr, const char **fields, const int *fields_len, i
 	int i, ptr;
 	xsm_word *word;
 
+	ptr = baseptr;
+	
 	for (i = 0; i < n_fields; ++i)
 	{
-		printf ("%s: ", fields[i]);
+		printf ("%s:		", fields[i]);
 
 		/* Display the corresponding number of words. */
 		int j;
@@ -423,7 +426,7 @@ debug_display_fields (int baseptr, const char **fields, const int *fields_len, i
 
 		}
 
-		printf (";");
+		printf ("\n");
 	}
 
 	return TRUE;
