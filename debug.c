@@ -587,10 +587,21 @@ debug_display_memlist()
 
 	ptr = DEBUG_LOC_MFL;
 
-	for (i = 0; i < MAX_MEM_PAGE; ++i)
+	for (i = 0; i < MAX_MEM_PAGE;)
 	{
 		word = memory_get_word(ptr++);
-		printf ("%d\t%s\n", i, word_get_string(word));
+		printf ("%d\t%s\t\t", i, word_get_string(word));
+		
+		word = memory_get_word(ptr++);
+		printf ("%d\t%s\t\t", i+1, word_get_string(word));
+		
+		word = memory_get_word(ptr++);
+		printf ("%d\t%s\t\t", i+2, word_get_string(word));
+		
+		word = memory_get_word(ptr++);
+		printf ("%d\t%s\n", i+3, word_get_string(word));
+		
+		i = i + 4;
 	}
 
 	return TRUE;
