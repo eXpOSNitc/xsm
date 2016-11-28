@@ -27,6 +27,7 @@
 #define DEBUG_WATCHCLEAR	13
 #define DEBUG_EXIT			14
 #define DEBUG_HELP			15
+#define DEBUG_VAL			16
 
 /* The following is highly dependent on the OS implementation. */
 #define DEBUG_LOC_PT		28672
@@ -112,6 +113,9 @@ debug_display_register (const char *regname);
 
 int
 debug_display_range_reg (const char *reg_b_name, const char *reg_e_name);
+
+int
+debug_display_val(char* mem);
 
 int
 debug_display_mem(int page);

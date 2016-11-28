@@ -25,7 +25,8 @@ char *_db_commands_lh[] = {
 	"watch",
 	"watchclear",
 	"exit",
-	"help"
+	"help",
+	"val"
 };
 
 const
@@ -45,7 +46,8 @@ char *_db_commands_sh[] = {
 	"w",
 	"wc",
 	"e",
-	"h"
+	"h",
+	"v"
 };
 
 int
@@ -246,6 +248,12 @@ debug_command(char *command)
 		case DEBUG_INODETABLE:
 			debug_display_inodetable();
 			break;	
+			
+		case DEBUG_VAL:
+			arg1 = strtok (NULL, delim);
+			debug_display_val (arg1);
+			
+		break;
 		
 		default:
 			printf("Unknown command \"%s\". See \"help\" for more information.\n",command);
@@ -259,13 +267,13 @@ debug_command_code (const char *cmd)
 {
 	int i;
 
-	for (i = 0; i <= DEBUG_HELP; ++i)
+	for (i = 0; i <= DEBUG_VAL; ++i)
 	{
 		if (!strcmp(cmd, _db_commands_lh[i]))
 			return i;
 	}
 
-	for (i = 0; i <= DEBUG_HELP; ++i)
+	for (i = 0; i <= DEBUG_VAL; ++i)
 	{
 		if (!strcmp(cmd, _db_commands_sh[i]))
 			return i;
@@ -386,6 +394,13 @@ debug_display_mem_range (int page_l, int page_h)
 	return TRUE;
 }
 
+int debug_display_val(char *mem){
+	xsm_word *mword;	
+	mword = memory_get_word(atoi(mem));
+	printf("%s\n",word_get_string(mword));
+	return TRUE;
+	}
+	
 int
 debug_display_pcb_pid (int pid)
 {	

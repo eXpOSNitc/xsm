@@ -5,6 +5,7 @@
 #include "tokenize.h"
 #include "exception.h"
 
+
 static
 xsm_cpu _thecpu;
 
@@ -141,7 +142,7 @@ machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_b
 
    buffer[bytes_to_read - 1] = '\0';
    *read_bytes = bytes_to_read;
-	
+
    return TRUE;
 }
 
@@ -717,13 +718,12 @@ machine_get_address_int (int write)
    /* Skip the opening square bracket. */
    tokenize_next_token(&token_info);
    token = tokenize_next_token(&token_info);
-
+	
    switch (token)
    {
       case TOKEN_REGISTER:
       {
-         xsm_reg *reg = machine_get_register (token_info.str);
-         address = word_get_integer (reg);
+         address = registers_get_integer (token_info.str);
       }
       break;
 
@@ -739,27 +739,8 @@ machine_get_address_int (int write)
    /* Next one is a bracket, neglect. */
    tokenize_next_token(&token_info);
 
-   /* What is the next one ? A comma ?*/
-
-   token = tokenize_peek (&token_info);
-
-   switch (token)
-   {
-      case TOKEN_REGISTER:
-      {
-         xsm_reg *reg = machine_get_register (token_info.str);
-         address = address + word_get_integer(reg);
-         tokenize_next_token(&token_info);
-      }
-      break;
-
-      case TOKEN_NUMBER:
-         address = address + token_info.val;
-         tokenize_next_token(&token_info);
-         break;
-   }
-
    /* Ask the MMU to translate the address for us. */
+    
    address = machine_translate_address (address, write);
 
    if (XSM_MEM_NOWRITE == address)
@@ -767,6 +748,7 @@ machine_get_address_int (int write)
       exception_set_ma (address);
       machine_register_exception("Access violation.", EXP_ILLMEM);
    }
+   
    else if (XSM_MEM_PAGEFAULT == address)
    {
       exception_set_epn (memory_addr_page(address));
