@@ -391,7 +391,7 @@ machine_post_execute ()
    return;
 }
 
-int
+int 
 machine_execute_instruction (int opcode)
 {
    switch (opcode)
@@ -541,6 +541,7 @@ machine_execute_logical (int opcode)
    xsm_word *src_left_reg, *src_right_reg;
    int token;
    YYSTYPE token_info;
+   
    int result, val_left, val_right;
 
    token = tokenize_next_token(&token_info);
@@ -550,45 +551,87 @@ machine_execute_logical (int opcode)
    token = tokenize_next_token(&token_info);
 
    if (TOKEN_COMMA != token)
-   {
+   { 
       machine_register_exception("Incorrect logical instruction.", EXP_ILLINSTR);
    }
 
    token = tokenize_next_token(&token_info);
    src_right_reg = machine_get_register(token_info.str);
 
-   val_left = word_get_integer(src_left_reg);
-   val_right = word_get_integer(src_right_reg);
+  /* String operation */
+  
+  if(word_get_unix_type(src_left_reg) == XSM_TYPE_STRING || 
+                  word_get_unix_type(src_right_reg) == XSM_TYPE_STRING){
+					  
+	  char* wor_left = word_get_string(src_left_reg);
+	  char* wor_right = word_get_string(src_right_reg);
+	  
+	  switch(opcode)
+	   {
+		  case LT:
+			 result = strcmp(wor_left,wor_right) < 0 ? 1 : 0;
+			 break;
 
-   switch(opcode)
-   {
-      case LT:
-         result = val_left < val_right ? 1 : 0;
-         break;
+		  case GT:
+			  result = strcmp(wor_left,wor_right) > 0 ? 1 : 0;
+			 break;
 
-      case GT:
-         result = val_left > val_right ? 1 : 0;
-         break;
+		  case EQ:
+			  result = strcmp(wor_left,wor_right) == 0 ? 1 : 0;
+			 break;
 
-      case EQ:
-         result = val_left == val_right ? 1 : 0;
-         break;
+		  case NE:
+			 result = strcmp(wor_left,wor_right) != 0 ? 1 : 0;
+			 break;
 
-      case NE:
-         result = val_left != val_right ? 1 : 0;
-         break;
+		  case GE:
+			  result = strcmp(wor_left,wor_right) >= 0 ? 1 : 0;
+			 break;
 
-      case GE:
-         result = val_left >= val_right ? 1 : 0;
-         break;
+		  case LE:
+			  result = strcmp(wor_left,wor_right) <= 0 ? 1 : 0;
+			 break;
+	   }
+	   	
+	  }
+  
+  /* Integer operation */
+  
+  else {
+	   val_left = word_get_integer(src_left_reg);
+	   val_right = word_get_integer(src_right_reg);
 
-      case LE:
-         result = val_left <= val_right ? 1 : 0;
-         break;
-   }
+	   switch(opcode)
+	   {
+		  case LT:
+			 result = val_left < val_right ? 1 : 0;
+			 break;
 
-   word_store_integer(src_left_reg, result);
-   return XSM_SUCCESS;
+		  case GT:
+			 result = val_left > val_right ? 1 : 0;
+			 break;
+
+		  case EQ:
+			 result = val_left == val_right ? 1 : 0;
+			 break;
+
+		  case NE:
+			 result = val_left != val_right ? 1 : 0;
+			 break;
+
+		  case GE:
+			 result = val_left >= val_right ? 1 : 0;
+			 break;
+
+		  case LE:
+			 result = val_left <= val_right ? 1 : 0;
+			 break;
+	   }
+    }
+
+  word_store_integer(src_left_reg, result);
+  return XSM_SUCCESS;
+
 }
 
 int
@@ -774,6 +817,7 @@ machine_translate_address (int address, int write)
 int
 machine_execute_arith (int opcode)
 {
+	// todo - Check for string operands - generate error.
    int result, token;
    xsm_reg *l_operand, *r_operand;
    YYSTYPE token_info;
@@ -1080,12 +1124,12 @@ machine_execute_interrupt()
 {
    int token;
    YYSTYPE token_info;
-   int interrupt_num, target;
+   int interrupt_num;
 
    token = tokenize_next_token(&token_info);
 
    interrupt_num = token_info.val;
-
+   
    return machine_execute_interrupt_do(interrupt_num);
 }
 
@@ -1095,7 +1139,7 @@ machine_execute_interrupt_do (int interrupt)
    int target;
 
    target = machine_interrupt_address (interrupt);
-
+   
    machine_execute_call_do (target);
 
    /* Change the mode now, that will do. */
