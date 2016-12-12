@@ -122,7 +122,7 @@ machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_b
    xsm_word *instr_mem;
 
    bytes_to_read = XSM_INSTRUCTION_SIZE * XSM_WORD_SIZE;
-
+   
    ip_reg = machine_get_ipreg();
    ip_val = word_get_integer(ip_reg);
 
@@ -130,7 +130,7 @@ machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_b
    instr_mem = machine_memory_get_word(ip_val);
    
    memcpy (buffer, instr_mem->val, bytes_to_read);
-   
+
    /* Trim. */
    for (i = 0; i < bytes_to_read; ++i)
    {
@@ -141,6 +141,7 @@ machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_b
    }
 
    buffer[bytes_to_read - 1] = '\0';
+    
    *read_bytes = bytes_to_read;
 
    return TRUE;
@@ -886,6 +887,7 @@ machine_execute_arith (int opcode)
 int
 machine_execute_jump (int opcode)
 {
+   
    int test, target, token;
    YYSTYPE token_info;
 
@@ -899,7 +901,13 @@ machine_execute_jump (int opcode)
    }
    else 
    {
-      test = word_get_integer(machine_get_register(token_info.str));
+	  
+	  // If string contents set as 1 -> Non zero
+	  if(word_get_unix_type (machine_get_register(token_info.str)) == XSM_TYPE_STRING)
+		test = 1;
+	  else
+        test = word_get_integer(machine_get_register(token_info.str));
+      
       /* Skip the comma. */
       tokenize_next_token(&token_info);
       token = tokenize_next_token(&token_info);
@@ -908,8 +916,8 @@ machine_execute_jump (int opcode)
 
    if (JZ == opcode)
       test = !test;
-
-   target = machine_translate_address (target, FALSE);
+   
+   //target = machine_translate_address (target, FALSE);
 
    if (test)
    {
