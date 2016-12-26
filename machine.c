@@ -916,9 +916,7 @@ machine_execute_jump (int opcode)
 
    if (JZ == opcode)
       test = !test;
-   
-   //target = machine_translate_address (target, FALSE);
-
+	
    if (test)
    {
       /* Take the branch. */
