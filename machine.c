@@ -1325,6 +1325,9 @@ machine_schedule_in(int firetime)
 int
 machine_execute_ini ()
 {
+   if (!_theoptions.debug)
+   	return XSM_SUCCESS;
+	
    xsm_word *reg;
 
    reg = registers_get_register ("P0");
