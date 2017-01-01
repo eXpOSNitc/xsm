@@ -70,14 +70,15 @@ machine_init (xsm_options *options)
       return FALSE;
 
    /* Initialize machine. */
-   word_store_string(memory_get_word(0), "LOAD 1, 0");
-   word_store_string(memory_get_word(2), "JMP 512");
+   word_store_string(memory_get_word(0), "LOADI 1, 0");
+   word_store_string(memory_get_word(2), "LOADI 2, 1");
+   word_store_string(memory_get_word(4), "JMP 512");
 
-   disk_read_block(memory_get_page(1), 0);
+   //disk_read_block(memory_get_page(1), 0);
 
    /* Set up IP.. */
    ipreg = machine_get_ipreg ();
-   word_store_integer(ipreg, 512);
+   word_store_integer(ipreg, 0);
 
    machine_set_mode(PRIVILEGE_KERNEL);
 
