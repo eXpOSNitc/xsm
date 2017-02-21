@@ -36,10 +36,10 @@
 #define DEBUG_PROC_RUNNING	1 
 #define MAX_NUM_PAGES		10
 #define PTBR_PCB_OFFSET		14
-#define DEBUG_PT_BASE		28928
+#define DEBUG_PT_BASE		29696
 
 /* System wide open file table. */
-#define DEBUG_LOC_SWOFT		29696
+#define DEBUG_LOC_SWOFT		28928
 #define MAX_OPENFILE_NUM	32
 #define MAX_MEM_PAGE		128
 #define DEBUG_LOC_MFL		29184

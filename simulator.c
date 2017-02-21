@@ -4,11 +4,10 @@
 
 #include "simulator.h"
 
-static
-xsm_options _options;
+#include "disk_file.h"
 
 static
-const char *XSM_DEFAULT_DISK = "../xfs-interface/disk.xfs";
+xsm_options _options;
 
 /* By default, assign 20 ticks. */
 static

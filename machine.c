@@ -345,7 +345,8 @@ machine_post_execute ()
       _thecpu.timer = _theoptions.timer;
    }
    /* Handle the disk interrupt. */
-   if (_thecpu.disk_state == XSM_DISK_BUSY)
+   
+   else if (_thecpu.disk_state == XSM_DISK_BUSY)
    {
       _thecpu.disk_wait--;
 
@@ -366,7 +367,7 @@ machine_post_execute ()
       }
    }
 
-   if (XSM_CONSOLE_BUSY == _thecpu.console_state)
+   else if (XSM_CONSOLE_BUSY == _thecpu.console_state)
    {
       _thecpu.console_wait--;
       if (_thecpu.console_wait == 0)
@@ -1027,6 +1028,7 @@ machine_execute_call_do (int target)
    curr_sp = curr_sp + 1;
    word_store_integer(spreg, curr_sp);
 
+	//printf("SP: %d for %d\n",curr_sp,target);
 
    /* Save IP onto the stack. */
    ipreg = registers_get_register("IP");

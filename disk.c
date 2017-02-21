@@ -1,4 +1,5 @@
 #include "disk.h"
+#include "disk_file.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -50,8 +51,9 @@ int
 disk_write_page (xsm_word *page, int block_num)
 {
 	xsm_word *block;
-
+	
 	block = disk_get_block (block_num);
+
 	memcpy (block, page, XSM_PAGE_SIZE * XSM_WORD_SIZE);
 
 	return TRUE;
@@ -86,9 +88,13 @@ disk_close ()
 {
 	int result; 
 	
-	/* Commit the disk, and exit. */
+	/* Clean the disk */
+	fclose (_file);
+	
+	/* Commit */
+	_file = fopen (XSM_DEFAULT_DISK, "w");
 	result = fwrite (_disk_mem_copy, 1, _mem_size, _file);
 	fclose (_file);
-
+	
 	return result;
 }
