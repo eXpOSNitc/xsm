@@ -415,9 +415,9 @@ debug_display_pcb_pid (int pid)
 
 	ptr = DEBUG_LOC_PT + pid * PT_ENTRY_SIZE;
 
-	printf("DEB %d \n",DEBUG_LOC_PT);
-	printf("DEB %d \n",pid);
-	printf("DEB %d \n",PT_ENTRY_SIZE);
+	//printf("DEB %d \n",DEBUG_LOC_PT);
+	//printf("DEB %d \n",pid);
+	//printf("DEB %d \n",PT_ENTRY_SIZE);
 	
 	return debug_display_fields(ptr, fields, fields_len, n_fields);
 }
