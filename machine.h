@@ -268,6 +268,9 @@ machine_get_mode ();
 xsm_word*
 machine_get_register (const char *name);
 
+void
+machine_register_exception (char* message, int code);
+
 int
 machine_instr_req_privilege (int opcode);
 

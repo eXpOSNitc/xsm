@@ -132,6 +132,9 @@ machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_b
    
    memcpy (buffer, instr_mem->val, bytes_to_read);
 
+	if(strlen(buffer) == 0)
+		 machine_register_exception("The simulator has encountered a NULL instruction", EXP_ILLINSTR);
+		
    /* Trim. */
    for (i = 0; i < bytes_to_read; ++i)
    {
