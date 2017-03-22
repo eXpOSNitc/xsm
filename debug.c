@@ -147,7 +147,11 @@ debug_show_interface ()
 		strtok(command, "\n");
 
 		if (!strcmp(command, "exit") || !strcmp(command, "e")){
+			//exit debug mode
 			debug_deactivate();
+			//halt machine
+			printf("Killing the machine\n");
+			exit(0);
 			return FALSE;
 		}
 		
@@ -251,11 +255,14 @@ debug_command(char *command)
 			
 		case DEBUG_VAL:
 			arg1 = strtok (NULL, delim);
-			debug_display_val (arg1);
-			
+			debug_display_val (arg1);		
 		break;
 		
-		default:
+		case DEBUG_HELP:
+			debug_display_help();
+		break;
+				
+	default:
 			printf("Unknown command \"%s\". See \"help\" for more information.\n",command);
 	}
 
@@ -370,7 +377,7 @@ debug_display_mem(int page)
 	{
 		word = memory_get_word(ptr);
 		content = word_get_string(word);
-		fprintf(fp,"+%d: %s\n", i, content);
+		fprintf(fp,"%d: %s\n", i, content);
 		ptr++; 
 	}
 	
@@ -643,6 +650,10 @@ debug_display_dfl()
 	return TRUE;
 }
 
+void debug_display_help(){
+		printf("Coming Soon\n");
+	}
+	
 int
 debug_display_inodetable ()
 {

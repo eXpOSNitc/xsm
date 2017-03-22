@@ -165,4 +165,7 @@ debug_display_usertable();
 int
 debug_display_location (int loc);
 
+void 
+debug_display_help ();
+
 #endif

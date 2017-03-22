@@ -1055,11 +1055,11 @@ machine_execute_backup()
    reg = registers_get_register("BP");
    machine_push_do (reg);
 
-   reg = registers_get_register("PTBR");
-   machine_push_do (reg);
+   //reg = registers_get_register("PTBR");
+   //machine_push_do (reg);
 
-   reg = registers_get_register("PTLR");
-   machine_push_do (reg);
+   //reg = registers_get_register("PTLR");
+   //machine_push_do (reg);
 
    for (ireg = 0; ireg < 19; ++ireg)
    {
@@ -1085,11 +1085,11 @@ machine_execute_restore ()
       machine_pop_do (reg);
    }
 
-   reg = registers_get_register ("PTLR");
-   machine_pop_do (reg);
+  // reg = registers_get_register ("PTLR");
+   //machine_pop_do (reg);
 
-   reg = registers_get_register ("PTBR");
-   machine_pop_do (reg);
+   //reg = registers_get_register ("PTBR");
+   //machine_pop_do (reg);
 
    reg = registers_get_register ("BP");
    machine_pop_do (reg);
