@@ -57,12 +57,13 @@
 #define OUT       32
 #define IRET      33
 #define HALT      34
+#define NOP      35
 
 /* Between these values are the privileged instructions. */
 #define TOKEN_KERN_LOW 23
 #define TOKEN_KERN_HIGH 34
 
-#define XSM_INSTRUCTION_COUNT 35
+#define XSM_INSTRUCTION_COUNT 36
 
 #define XSM_DISKOP_LOAD 0
 #define XSM_DISKOP_STORE 1

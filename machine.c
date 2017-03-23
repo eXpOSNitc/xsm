@@ -49,7 +49,8 @@ const char *instructions[]=
    "INI",
    "OUT",
    "IRET",
-   "HALT"
+   "HALT",
+   "NOP"
 };
 
 int
@@ -498,6 +499,11 @@ machine_execute_instruction (int opcode)
 
       case HALT:	
          return XSM_HALT;
+         break;
+         
+      case NOP:
+			// do nothing
+			break;
    }
 
    return TRUE;
@@ -1104,7 +1110,15 @@ machine_execute_call ()
    YYSTYPE token_info;
 
    token = tokenize_next_token(&token_info);
-   target = token_info.val;
+   
+   if (token == TOKEN_NUMBER)
+   {
+      target = token_info.val;
+   }
+   else
+   {
+      target = word_get_integer (machine_get_register (token_info.str));
+   }
 
    return machine_execute_call_do (target);
 }
