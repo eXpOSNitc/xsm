@@ -68,6 +68,11 @@ simulator_parse_args(int argc, char **argv)
 			argc --;
 
 			val = atoi(*argv);
+            if (val < 0 || val > 1024)
+            {
+                printf("--timer takes value in the range 0-1024\n");
+                exit(0);
+            }
 			_options.timer = val;
 
 			argv++;
@@ -79,6 +84,11 @@ simulator_parse_args(int argc, char **argv)
 			argc --;
 
 			val = atoi(*argv);
+            if (val < 20 || val > 1024)
+            {
+                printf("--console takes value in the range 0-1024\n");
+                exit(0);
+            }
 			_options.console = val;
 
 			argv++;
@@ -90,6 +100,11 @@ simulator_parse_args(int argc, char **argv)
 			argc --;
 
 			val = atoi(*argv);
+            if (val < 20 || val > 1024)
+            {
+                printf("--disk takes value in the range 0-1024\n");
+                exit(0);
+            }
 			_options.disk = val;
 
 			argv++;
