@@ -17,16 +17,16 @@ const char *instructions[]=
    "MOV",
    "ADD",
    "SUB",
-   "MUL", 
+   "MUL",
    "DIV",
    "MOD",
    "INR",
    "DCR",
    "LT",
-   "GT", 
+   "GT",
    "EQ",
-   "NE", 
-   "GE", 
+   "NE",
+   "GE",
    "LE",
    "JZ",
    "JNZ",
@@ -37,7 +37,7 @@ const char *instructions[]=
    "RET",
    "BRKP",
    "INT",
-   
+
    "LOADI",
    "LOAD",
    "STORE",
@@ -88,9 +88,9 @@ machine_init (xsm_options *options)
    _thecpu.disk_state = XSM_DISK_IDLE;
 
    /* Initialise timer clock*/
-   
+
    _thecpu.timer = _theoptions.timer;
-   
+
    return XSM_SUCCESS;
 }
 
@@ -98,13 +98,13 @@ int
 machine_get_opcode (const char* instr)
 {
    int i;
-   
+
    for (i = 0; i < XSM_INSTRUCTION_COUNT; ++i)
    {
       if (!strcasecmp(instr, instructions[i]))
          return i;
    }
-   
+
    return XSM_ILLINSTR;
 }
 
@@ -113,29 +113,29 @@ machine_get_opcode (const char* instr)
  * If this argument raises a warning, then investigate what yy_size_t means,
  * and change it here accordingly.
  */
- 
+
 int
 machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_bytes, int _input_ max)
 {
-	
+
    int ip_val, i, j;
    xsm_word *ip_reg;
    int bytes_to_read;
    xsm_word *instr_mem;
 
    bytes_to_read = XSM_INSTRUCTION_SIZE * XSM_WORD_SIZE;
-   
+
    ip_reg = machine_get_ipreg();
    ip_val = word_get_integer(ip_reg);
 
    ip_val = machine_translate_address(ip_val, FALSE);
    instr_mem = machine_memory_get_word(ip_val);
-   
+
    memcpy (buffer, instr_mem->val, bytes_to_read);
 
 	if(strlen(buffer) == 0)
 		 machine_register_exception("The simulator has encountered a NULL instruction", EXP_ILLINSTR);
-		
+
    /* Trim. */
    for (i = 0; i < bytes_to_read; ++i)
    {
@@ -146,7 +146,7 @@ machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_b
    }
 
    buffer[bytes_to_read - 1] = '\0';
-    
+
    *read_bytes = bytes_to_read;
 
    return TRUE;
@@ -269,13 +269,13 @@ machine_run ()
       if (XSM_HALT == machine_execute_instruction (opcode))
          break;
 
-      /* Post executing instruction. 
+      /* Post executing instruction.
 			Enabled Only in User mode
        */
-       
+
        if( machine_get_mode() == PRIVILEGE_USER)
 			machine_post_execute ();
-   
+
    }
 
    return TRUE;
@@ -295,7 +295,7 @@ machine_handle_exception()
    char *message;
    int code, mode;
    int curr_ip;
-  
+
    xsm_word *reg_eip, *reg_epn, *reg_ec, *reg_ema;
 
    /* Get the details about the exception. */
@@ -312,7 +312,7 @@ machine_handle_exception()
    // fetch ip store in eip
    curr_ip = word_get_integer(registers_get_register("IP"));
    word_store_integer(reg_eip, curr_ip);
- 
+
    switch(mode)
    {
       case EXP_ILLMEM:
@@ -342,14 +342,14 @@ machine_post_execute ()
 {
    /* Tick the timers. */
    _thecpu.timer--;
-   
+
    if (_thecpu.timer == 0)
    {
       machine_execute_interrupt_do(XSM_INTERRUPT_TIMER);
       _thecpu.timer = _theoptions.timer;
    }
    /* Handle the disk interrupt. */
-   
+
    else if (_thecpu.disk_state == XSM_DISK_BUSY)
    {
       _thecpu.disk_wait--;
@@ -398,7 +398,7 @@ machine_post_execute ()
    return;
 }
 
-int 
+int
 machine_execute_instruction (int opcode)
 {
    switch (opcode)
@@ -497,10 +497,10 @@ machine_execute_instruction (int opcode)
          machine_execute_iret ();
          break;
 
-      case HALT:	
+      case HALT:
          return XSM_HALT;
          break;
-         
+
       case NOP:
 			// do nothing
 			break;
@@ -553,7 +553,7 @@ machine_execute_logical (int opcode)
    xsm_word *src_left_reg, *src_right_reg;
    int token;
    YYSTYPE token_info;
-   
+
    int result, val_left, val_right;
 
    token = tokenize_next_token(&token_info);
@@ -563,7 +563,7 @@ machine_execute_logical (int opcode)
    token = tokenize_next_token(&token_info);
 
    if (TOKEN_COMMA != token)
-   { 
+   {
       machine_register_exception("Incorrect logical instruction.", EXP_ILLINSTR);
    }
 
@@ -571,13 +571,13 @@ machine_execute_logical (int opcode)
    src_right_reg = machine_get_register(token_info.str);
 
   /* String operation */
-  
-  if(word_get_unix_type(src_left_reg) == XSM_TYPE_STRING || 
+
+  if(word_get_unix_type(src_left_reg) == XSM_TYPE_STRING ||
                   word_get_unix_type(src_right_reg) == XSM_TYPE_STRING){
-					  
+
 	  char* wor_left = word_get_string(src_left_reg);
 	  char* wor_right = word_get_string(src_right_reg);
-	  
+
 	  switch(opcode)
 	   {
 		  case LT:
@@ -604,11 +604,11 @@ machine_execute_logical (int opcode)
 			  result = strcmp(wor_left,wor_right) <= 0 ? 1 : 0;
 			 break;
 	   }
-	   	
+
 	  }
-  
+
   /* Integer operation */
-  
+
   else {
 	   val_left = word_get_integer(src_left_reg);
 	   val_right = word_get_integer(src_right_reg);
@@ -655,11 +655,11 @@ machine_execute_brkp ()
    if (!_theoptions.debug)
       return XSM_SUCCESS;
 
-	/* activate the debug mode 
+	/* activate the debug mode
 		deactivated on pressing e or s in debug interface.
 	*/
 	debug_activate();
-	
+
    return XSM_SUCCESS;
 }
 
@@ -773,7 +773,7 @@ machine_get_address_int (int write)
    /* Skip the opening square bracket. */
    tokenize_next_token(&token_info);
    token = tokenize_next_token(&token_info);
-	
+
    switch (token)
    {
       case TOKEN_REGISTER:
@@ -795,7 +795,7 @@ machine_get_address_int (int write)
    tokenize_next_token(&token_info);
 
    /* Ask the MMU to translate the address for us. */
-    
+
    address = machine_translate_address (address, write);
 
    if (XSM_MEM_NOWRITE == address)
@@ -803,7 +803,7 @@ machine_get_address_int (int write)
       exception_set_ma (address);
       machine_register_exception("Access violation.", EXP_ILLMEM);
    }
-   
+
    else if (XSM_MEM_PAGEFAULT == address)
    {
       exception_set_epn (memory_addr_page(address));
@@ -898,7 +898,7 @@ machine_execute_arith (int opcode)
 int
 machine_execute_jump (int opcode)
 {
-   
+
    int test, target, token;
    YYSTYPE token_info;
 
@@ -910,15 +910,15 @@ machine_execute_jump (int opcode)
 
       target = token_info.val;
    }
-   else 
+   else
    {
-	  
+
 	  // If string contents set as 1 -> Non zero
 	  if(word_get_unix_type (machine_get_register(token_info.str)) == XSM_TYPE_STRING)
 		test = 1;
 	  else
         test = word_get_integer(machine_get_register(token_info.str));
-      
+
       /* Skip the comma. */
       tokenize_next_token(&token_info);
       token = tokenize_next_token(&token_info);
@@ -927,7 +927,7 @@ machine_execute_jump (int opcode)
 
    if (JZ == opcode)
       test = !test;
-	
+
    if (test)
    {
       /* Take the branch. */
@@ -1030,7 +1030,7 @@ machine_execute_call_do (int target)
    xsm_word *ipreg;
    xsm_word *stack_pointer;
    xsm_word *spreg;
-	
+
    /* Increment SP. */
    spreg = registers_get_register("SP");
    curr_sp = word_get_integer(spreg);
@@ -1044,16 +1044,16 @@ machine_execute_call_do (int target)
    curr_ip = word_get_integer(ipreg);
    stack_pointer = machine_stack_pointer (TRUE);
    word_store_integer(stack_pointer, curr_ip);
-	
+
    /* Update IP to the new code location. */
    word_store_integer (ipreg, target);
-   
+
    return XSM_SUCCESS;
 }
 
 int
 machine_execute_backup()
-{	
+{
    xsm_word *reg;
    int ireg;
    char str_reg[5];
@@ -1110,7 +1110,7 @@ machine_execute_call ()
    YYSTYPE token_info;
 
    token = tokenize_next_token(&token_info);
-   
+
    if (token == TOKEN_NUMBER)
    {
       target = token_info.val;
@@ -1155,18 +1155,21 @@ machine_execute_interrupt()
    token = tokenize_next_token(&token_info);
 
    interrupt_num = token_info.val;
-   
+
    return machine_execute_interrupt_do(interrupt_num);
 }
 
-int 
+int
 machine_execute_interrupt_do (int interrupt)
 {
    int target;
 
    target = machine_interrupt_address (interrupt);
-   
+
    machine_execute_call_do (target);
+
+   if (machine_get_mode() == PRIVILEGE_KERNEL)
+      machine_register_exception("Can't access interrupt in kernel mode", EXP_ILLINSTR);
 
    /* Change the mode now, that will do. */
    machine_set_mode (PRIVILEGE_KERNEL);
@@ -1176,7 +1179,7 @@ machine_execute_interrupt_do (int interrupt)
 int
 machine_interrupt_address (int int_num)
 {
-   if (int_num < 0 || int_num > 18)
+   if (int_num < 4 || int_num > 18)
       return -1; /* Not supposed to happen. */
 
    return (int_num * 2 + 2) * XSM_PAGE_SIZE;
@@ -1253,7 +1256,7 @@ machine_execute_store_do (int page_num, int block_num)
 int
 machine_schedule_disk (int page_num, int block_num, int firetime, int operation)
 {
-	
+
    /* If the disk is busy, just ignore the request. */
    if (_thecpu.disk_state == XSM_DISK_BUSY)
       return XSM_SUCCESS;
@@ -1271,7 +1274,7 @@ int
 machine_execute_load_do (int page_num, int block_num)
 {
    xsm_word *page_base;
-   
+
    page_base = memory_get_page (page_num);
 
    return disk_read_block (page_base, block_num);
@@ -1347,7 +1350,7 @@ machine_execute_ini ()
 {
    if (!_theoptions.debug)
    	return XSM_SUCCESS;
-	
+
    xsm_word *reg;
 
    reg = registers_get_register ("P0");
@@ -1367,7 +1370,7 @@ machine_execute_in_do (xsm_word *word)
    for (i = 0; i < XSM_WORD_SIZE; ++i)
       if (input[i] == '\n')
          input[i] = '\0';
-      
+
    return word_store_string(word, input);
 }
 
@@ -1379,7 +1382,7 @@ machine_execute_iret ()
 
    machine_set_mode (PRIVILEGE_USER);
    machine_pop_do (&target);
-   
+
    ipreg = registers_get_register("IP");
    word_copy(ipreg, &target);
    return XSM_SUCCESS;

@@ -54,7 +54,9 @@ int
 debug_init ()
 {
 	_db_status.state = OFF;
-	
+	_db_status.skip = 0;
+	strcpy(_db_status.command, "help");
+
 	debug_watch_clear ();
 
 	return TRUE;
@@ -135,18 +137,27 @@ debug_show_interface ()
 	int done = FALSE;
 	char next_instr[DEBUG_STRING_LEN];
 
+	if (_db_status.skip > 0)
+	{
+		_db_status.skip--;
+		return TRUE;
+	}
+
 	memory_retrieve_raw_instr (next_instr, machine_translate_address(_db_status.ip,FALSE));
 
 	printf ("Next instruction to execute: %s\n", next_instr);
 
 	while (!done)
 	{
+		printf("debug> ");
 		fgets (command, DEBUG_COMMAND_LEN, stdin);
-
+		
 		// remove the dangling \n from fgets
 		strtok(command, "\n");
 
-		if (!strcmp(command, "exit") || !strcmp(command, "e")){
+		if (!strcmp(command, "\n"))
+			strncpy(command, _db_status.command, DEBUG_COMMAND_LEN);
+		else if (!strcmp(command, "exit") || !strcmp(command, "e")){
 			//exit debug mode
 			debug_deactivate();
 			//halt machine
@@ -154,7 +165,9 @@ debug_show_interface ()
 			exit(0);
 			return FALSE;
 		}
-		
+		else
+			strncpy(_db_status.command, command, DEBUG_COMMAND_LEN);
+
 		done = debug_command (command);
 	}
 
@@ -176,9 +189,19 @@ debug_command(char *command)
 	switch (code)
 	{
 		case DEBUG_STEP:
+			arg1 = strtok(NULL, delim);
+			if (arg1)
+			{
+				debug_skip_n(atoi(arg1));
+			}
 			return TRUE;
 
 		case DEBUG_CONTINUE:
+			arg1 = strtok(NULL, delim);
+			if (arg1)
+			{
+				debug_skip_n(atoi(arg1));
+			}
 			debug_deactivate();
 			return TRUE;
 
@@ -244,24 +267,32 @@ debug_command(char *command)
 		case DEBUG_MEMFREELIST:
 			debug_display_memlist();
 			break;
-			
+
 		case DEBUG_DISKFREELIST:
 			debug_display_dfl();
 			break;
 
 		case DEBUG_INODETABLE:
 			debug_display_inodetable();
-			break;	
-			
+			break;
+
 		case DEBUG_VAL:
-			arg1 = strtok (NULL, delim);
-			debug_display_val (arg1);		
+			arg1 = strtok(NULL, delim);
+
+			if (!arg1)
+			{
+				printf("Invalid argument for \"%s\". See \"help\" for more information.\n", command);
+			}
+			else
+			{
+				debug_display_val (arg1);
+			}
 		break;
-		
+
 		case DEBUG_HELP:
 			debug_display_help();
 		break;
-				
+
 	default:
 			printf("Unknown command \"%s\". See \"help\" for more information.\n",command);
 	}
@@ -287,6 +318,16 @@ debug_command_code (const char *cmd)
 	}
 
 	return -1;
+}
+
+int
+debug_skip_n (int num)
+{
+	num--;
+	if (num > 0)
+		_db_status.skip = num;
+
+	return TRUE;
 }
 
 int
@@ -358,9 +399,9 @@ debug_display_mem(int page)
 	char *content;
 
 	FILE *fp;
-	
+
 	fp = fopen("mem","w");
-	 
+
 	word = memory_get_page(page);
 
 	if (!word)
@@ -372,17 +413,17 @@ debug_display_mem(int page)
 	ptr = page * XSM_PAGE_SIZE;
 
 	// write to file mem
-	
+
 	for (i = 0; i < XSM_PAGE_SIZE; i++)
 	{
 		word = memory_get_word(ptr);
 		content = word_get_string(word);
 		fprintf(fp,"%d: %s\n", i, content);
-		ptr++; 
+		ptr++;
 	}
-	
+
 	fclose(fp);
-	
+
 	printf("Written to file mem\n");
 	return TRUE;
 }
@@ -402,20 +443,20 @@ debug_display_mem_range (int page_l, int page_h)
 }
 
 int debug_display_val(char *mem){
-	xsm_word *mword;	
+	xsm_word *mword;
 	mword = memory_get_word(atoi(mem));
 	printf("%s\n",word_get_string(mword));
 	return TRUE;
 	}
-	
+
 int
 debug_display_pcb_pid (int pid)
-{	
+{
 	const char *fields[] = {"Tick", "PID", "PPID", "UserID", "State", "Swap Flag", "Inode Index",
 	"Input Buffer", "Mode Flag", "User Area Swap Status", "User Area Page Number",
 	"Kernel Stack Pointer", "User Stack Pointer", "PTBR", "PTLR", "Unused"
 	};
-	
+
 	const int fields_len[] = {1, 1, 1, 1 , 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 	const int n_fields = 15;
 	int ptr;
@@ -425,7 +466,7 @@ debug_display_pcb_pid (int pid)
 	//printf("DEB %d \n",DEBUG_LOC_PT);
 	//printf("DEB %d \n",pid);
 	//printf("DEB %d \n",PT_ENTRY_SIZE);
-	
+
 	return debug_display_fields(ptr, fields, fields_len, n_fields);
 }
 
@@ -436,7 +477,7 @@ debug_display_fields (int baseptr, const char **fields, const int *fields_len, i
 	xsm_word *word;
 
 	ptr = baseptr;
-	
+
 	for (i = 0; i < n_fields; ++i)
 	{
 		printf ("%s:		", fields[i]);
@@ -470,7 +511,7 @@ debug_display_pcb ()
 		debug_display_pcb_pid(pid);
 		return TRUE;
 	}
-	
+
 	printf ("No active processes.\n");
 	return FALSE;
 }
@@ -547,7 +588,7 @@ debug_display_pt_ptbr ()
 int
 debug_display_pt_at (int addr)
 {
-		
+
 	int i, ptr;
 	xsm_word *word;
 
@@ -556,15 +597,15 @@ debug_display_pt_at (int addr)
 	for (i = 0; i < MAX_NUM_PAGES; ++i)
 	{
 		printf ("VIRT: %d\t\t", i);
-		
+
 		word = memory_get_word(ptr);
 		printf ("PHY: %s\t\t", word_get_string(word));
-	
+
 		ptr = ptr + 1;
-		
+
 		word = memory_get_word(ptr);
 		printf ("AUX: %s\t\n", word_get_string(word));
-		
+
 		ptr = ptr + 1;
 	}
 
@@ -574,10 +615,10 @@ debug_display_pt_at (int addr)
 int
 debug_display_pt_pid (int pid)
 {
-	
+
 	int ptbr_addr;
-	
-	ptbr_addr = DEBUG_PT_BASE + pid * MAX_NUM_PAGES * 2; 
+
+	ptbr_addr = DEBUG_PT_BASE + pid * MAX_NUM_PAGES * 2;
 	return debug_display_pt_at(ptbr_addr);
 }
 
@@ -617,16 +658,16 @@ debug_display_memlist()
 	{
 		word = memory_get_word(ptr++);
 		printf ("%d\t%s\t\t", i, word_get_string(word));
-		
+
 		word = memory_get_word(ptr++);
 		printf ("%d\t%s\t\t", i+1, word_get_string(word));
-		
+
 		word = memory_get_word(ptr++);
 		printf ("%d\t%s\t\t", i+2, word_get_string(word));
-		
+
 		word = memory_get_word(ptr++);
 		printf ("%d\t%s\n", i+3, word_get_string(word));
-		
+
 		i = i + 4;
 	}
 
@@ -651,9 +692,29 @@ debug_display_dfl()
 }
 
 void debug_display_help(){
-		printf("Coming Soon\n");
-	}
-	
+	printf(" step / s \n\t Execution proceeds by a single step \n");
+	printf(" step / s <num> \n\t Execution proceeds by <num> number of steps \n");
+	printf(" continue / c \n\t Execution proceeds till the next BRKP instruction \n");
+	printf(" continue / c <num> \n\t Execution proceeds till the next <num> th occurence of the BRKP instruction \n");
+	printf(" reg / r \n\t Displays the contents of all the machine registers \n");
+	printf(" reg / r <register_name>  \n\t Displays the contents of the specified register \n");
+	printf(" mem / m <page_num>  \n\t Writes the contents of the memory page <page_num> to the file \"mem\" \n");
+	printf(" mem / m <page_num_1> <page_num_2>  \n\t Writes the contents of the memory from pages <page_num_1> to <page_num_2> to the file \"mem\" \n");
+	printf(" pcb / p \n\t Displays the Process Table entry of the process with the state as RUNNING \n");
+	printf(" pcb / p <pid> \n\t Displays the Process Table entry of the process with the given <pid> \n");
+	printf(" pagetable / pt \n\t Displays the Page Table at the location pointed by PTBR \n");
+	printf(" pagetable / pt <pid> \n\t Displays the <pid> th Page Table \n");
+	printf(" filetable / ft \n\t Displays the System Wide Open File Table \n");
+	printf(" memfreelist / mf \n\t Displays the Memory Free List \n");
+	printf(" diskfreelist / df \n\t Displays the memory copy of Disk Free List \n");
+	printf(" inodetable / it \n\t Displays the memory copy of the Inode Table \n");
+	printf(" usertable / ut \n\t Displays the memory copy of the User Table \n");
+	printf(" val / v <address> \n\t Displays the content at memory address (address translation takes place if used in USER mode) \n");
+	printf(" watch / w <physical_address> \n\t Sets a watch point at this address \n");
+	printf(" watchclear / wc \n\t Clears all the watch points \n");
+	printf(" exit / e \n\t Exits the debug prompt and halts the machine \n");
+}
+
 int
 debug_display_inodetable ()
 {
