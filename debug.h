@@ -27,7 +27,8 @@
 #define DEBUG_WATCHCLEAR	13
 #define DEBUG_EXIT			14
 #define DEBUG_HELP			15
-#define DEBUG_VAL			16
+#define DEBUG_LIST			16
+#define DEBUG_VAL			17
 
 /* The following is highly dependent on the OS implementation. */
 #define DEBUG_LOC_PT		28672
@@ -169,6 +170,9 @@ debug_display_usertable();
 
 int
 debug_display_location (int loc);
+
+int
+debug_display_list();
 
 void
 debug_display_help ();

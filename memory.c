@@ -12,10 +12,10 @@ int
 memory_init ()
 {
    _xsm_mem = (xsm_word *) malloc (sizeof(xsm_word) * XSM_MEMORY_SIZE);
-   
+
    if (!_xsm_mem)
       return XSM_FAILURE;
-      
+
    return XSM_SUCCESS;
 }
 
@@ -24,7 +24,7 @@ memory_get_word (int address)
 {
    if (!memory_is_address_valid (address))
       return NULL;
-      
+
    return &_xsm_mem[address];
 }
 
@@ -111,7 +111,7 @@ memory_translate_page (int ptbr, int page, int write)
    return entry;
 }
 
-void 
+void
 memory_destroy()
 {
    free (_xsm_mem);

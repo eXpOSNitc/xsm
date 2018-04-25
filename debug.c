@@ -26,6 +26,7 @@ char *_db_commands_lh[] = {
 	"watchclear",
 	"exit",
 	"help",
+	"list",
 	"val"
 };
 
@@ -47,6 +48,7 @@ char *_db_commands_sh[] = {
 	"wc",
 	"e",
 	"h",
+	"ls",
 	"v"
 };
 
@@ -151,7 +153,7 @@ debug_show_interface ()
 	{
 		printf("debug> ");
 		fgets (command, DEBUG_COMMAND_LEN, stdin);
-		
+
 		// remove the dangling \n from fgets
 		strtok(command, "\n");
 
@@ -288,6 +290,10 @@ debug_command(char *command)
 				debug_display_val (arg1);
 			}
 		break;
+
+		case DEBUG_LIST:
+			debug_display_list();
+			break;
 
 		case DEBUG_HELP:
 			debug_display_help();
@@ -712,6 +718,7 @@ void debug_display_help(){
 	printf(" val / v <address> \n\t Displays the content at memory address (address translation takes place if used in USER mode) \n");
 	printf(" watch / w <physical_address> \n\t Sets a watch point at this address \n");
 	printf(" watchclear / wc \n\t Clears all the watch points \n");
+	printf(" list / ls \n\t List 5 instructions before and after the current instruction \n");
 	printf(" exit / e \n\t Exits the debug prompt and halts the machine \n");
 }
 
@@ -778,6 +785,21 @@ debug_display_usertable()
 
 		/*Update ptr.*/
 		ptr = ptr + entry_size;
+	}
+
+	return TRUE;
+}
+
+int
+debug_display_list()
+{
+	char instr[DEBUG_STRING_LEN];
+	int i;
+
+	for (i = 0; i <= 10; ++i)
+	{
+		memory_retrieve_raw_instr (instr, machine_translate_address(_db_status.ip + (i - 6) * XSM_INSTRUCTION_SIZE,FALSE));
+		printf("%d \t %s \n", _db_status.ip + (i - 6) * XSM_INSTRUCTION_SIZE, instr);
 	}
 
 	return TRUE;

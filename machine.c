@@ -1169,7 +1169,7 @@ machine_execute_interrupt_do (int interrupt)
    machine_execute_call_do (target);
 
    if (machine_get_mode() == PRIVILEGE_KERNEL)
-      machine_register_exception("Can't access interrupt in kernel mode", EXP_ILLINSTR);
+      machine_register_exception("Invoking interrupts in kernel mode not allowed", EXP_ILLINSTR);
 
    /* Change the mode now, that will do. */
    machine_set_mode (PRIVILEGE_KERNEL);
