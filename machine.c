@@ -1156,6 +1156,9 @@ machine_execute_interrupt()
 
    interrupt_num = token_info.val;
 
+   if (interrupt_num < 4 || interrupt_num > 18)
+    machine_register_exception("Invalid Interrupt Number", EXP_ILLINSTR);
+
    return machine_execute_interrupt_do(interrupt_num);
 }
 
@@ -1179,7 +1182,7 @@ machine_execute_interrupt_do (int interrupt)
 int
 machine_interrupt_address (int int_num)
 {
-   if (int_num < 4 || int_num > 18)
+   if (int_num > 18)
       return -1; /* Not supposed to happen. */
 
    return (int_num * 2 + 2) * XSM_PAGE_SIZE;

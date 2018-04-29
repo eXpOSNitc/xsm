@@ -32,6 +32,7 @@ word_get_unix_type (xsm_word* word)
 int
 word_get_integer (xsm_word* word)
 {
+	int n;
 	return atoi(word->val);
 }
 
