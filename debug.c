@@ -43,12 +43,12 @@ char *_db_commands_sh[] = {
 	"df",
 	"it",
 	"ut",
-	"l",
+	"loc",
 	"w",
 	"wc",
 	"e",
 	"h",
-	"ls",
+	"l",
 	"v"
 };
 
@@ -192,6 +192,7 @@ debug_command(char *command)
 	{
 		case DEBUG_STEP:
 			arg1 = strtok(NULL, delim);
+
 			if (arg1)
 			{
 				debug_skip_n(atoi(arg1));
@@ -200,6 +201,7 @@ debug_command(char *command)
 
 		case DEBUG_CONTINUE:
 			arg1 = strtok(NULL, delim);
+
 			if (arg1)
 			{
 				debug_skip_n(atoi(arg1));
@@ -209,12 +211,14 @@ debug_command(char *command)
 
 		case DEBUG_REG:
 			arg1 = strtok(NULL, delim);
+
 			if (!arg1)
 			{
 				debug_display_all_registers();
 			}
 			else{
 				arg2 = strtok(NULL, delim);
+
 				if (!arg2)
 				{
 					debug_display_register(arg1);
@@ -228,15 +232,23 @@ debug_command(char *command)
 
 		case DEBUG_MEM:
 			arg1 = strtok (NULL, delim);
-			arg2 = strtok (NULL, delim);
 
-			if (arg2)
+			if (!arg1)
 			{
-				debug_display_mem_range(atoi(arg1), atoi(arg2));
+				printf("Invalid argument for \"%s\". See \"help\" for more information.\n", command);
 			}
 			else
 			{
-				debug_display_mem(atoi(arg1));
+				arg2 = strtok (NULL, delim);
+
+				if (!arg2)
+				{
+					debug_display_mem(atoi(arg1));
+				}
+				else
+				{
+					debug_display_mem_range(atoi(arg1), atoi(arg2));
+				}
 			}
 			break;
 
@@ -244,9 +256,13 @@ debug_command(char *command)
 			arg1 = strtok (NULL, delim);
 
 			if (!arg1)
+			{
 				debug_display_pcb();
+			}
 			else
+			{
 				debug_display_pcb_pid (atoi(arg1));
+			}
 			break;
 
 		case DEBUG_PAGETABLE:
@@ -278,6 +294,19 @@ debug_command(char *command)
 			debug_display_inodetable();
 			break;
 
+		case DEBUG_LOCATION:
+			arg1 = strtok(NULL, delim);
+
+			if(!arg1)
+			{
+				printf("Invalid argument for \"%s\". See \"help\" for more information.\n", command);
+			}
+			else
+			{
+				debug_display_location (atoi(arg1));
+			}
+			break;
+
 		case DEBUG_VAL:
 			arg1 = strtok(NULL, delim);
 
@@ -289,7 +318,7 @@ debug_command(char *command)
 			{
 				debug_display_val (arg1);
 			}
-		break;
+			break;
 
 		case DEBUG_LIST:
 			debug_display_list();
@@ -297,7 +326,7 @@ debug_command(char *command)
 
 		case DEBUG_HELP:
 			debug_display_help();
-		break;
+			break;
 
 	default:
 			printf("Unknown command \"%s\". See \"help\" for more information.\n",command);
@@ -715,10 +744,11 @@ void debug_display_help(){
 	printf(" diskfreelist / df \n\t Displays the memory copy of Disk Free List \n");
 	printf(" inodetable / it \n\t Displays the memory copy of the Inode Table \n");
 	printf(" usertable / ut \n\t Displays the memory copy of the User Table \n");
-	printf(" val / v <address> \n\t Displays the content at memory address (address translation takes place if used in USER mode) \n");
+	printf(" location / loc <address> \n\t Displays the content at memory address (address translation takes place if used in USER mode) \n");
+	printf(" val / v <address> \n\t Displays the content at memory address (no address translation occurs) \n");
 	printf(" watch / w <physical_address> \n\t Sets a watch point at this address \n");
 	printf(" watchclear / wc \n\t Clears all the watch points \n");
-	printf(" list / ls \n\t List 5 instructions before and after the current instruction \n");
+	printf(" list / l \n\t List 10 instructions before and after the current instruction \n");
 	printf(" exit / e \n\t Exits the debug prompt and halts the machine \n");
 }
 
@@ -796,10 +826,13 @@ debug_display_list()
 	char instr[DEBUG_STRING_LEN];
 	int i;
 
-	for (i = 0; i <= 10; ++i)
+	for (i = 0; i <= 2 * DEBUG_LIST_LEN; ++i)
 	{
-		memory_retrieve_raw_instr (instr, machine_translate_address(_db_status.ip + (i - 6) * XSM_INSTRUCTION_SIZE,FALSE));
-		printf("%d \t %s \n", _db_status.ip + (i - 6) * XSM_INSTRUCTION_SIZE, instr);
+		memory_retrieve_raw_instr (instr, machine_translate_address(_db_status.ip + (i - DEBUG_LIST_LEN - 1) * XSM_INSTRUCTION_SIZE,FALSE));
+		if (i == DEBUG_LIST_LEN)
+			printf("%d* \t %s \n", _db_status.ip + (i - DEBUG_LIST_LEN - 1) * XSM_INSTRUCTION_SIZE, instr);
+		else
+			printf("%d \t %s \n", _db_status.ip + (i - DEBUG_LIST_LEN - 1) * XSM_INSTRUCTION_SIZE, instr);
 	}
 
 	return TRUE;
