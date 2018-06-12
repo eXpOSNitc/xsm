@@ -42,11 +42,12 @@ char *_db_commands_sh[] = {
 	"df",
 	"it",
 	"ut",
-	"l",
+	"loc",
 	"w",
 	"wc",
 	"e",
 	"h",
+	"l",
 	"v"
 };
 
@@ -176,20 +177,34 @@ debug_command(char *command)
 	switch (code)
 	{
 		case DEBUG_STEP:
+			arg1 = strtok(NULL, delim);
+
+			if (arg1)
+			{
+				debug_skip_n(atoi(arg1));
+			}
 			return TRUE;
 
 		case DEBUG_CONTINUE:
+			arg1 = strtok(NULL, delim);
+
+			if (arg1)
+			{
+				debug_skip_n(atoi(arg1));
+			}
 			debug_deactivate();
 			return TRUE;
 
 		case DEBUG_REG:
 			arg1 = strtok(NULL, delim);
+
 			if (!arg1)
 			{
 				debug_display_all_registers();
 			}
 			else{
 				arg2 = strtok(NULL, delim);
+
 				if (!arg2)
 				{
 					debug_display_register(arg1);
@@ -203,15 +218,23 @@ debug_command(char *command)
 
 		case DEBUG_MEM:
 			arg1 = strtok (NULL, delim);
-			arg2 = strtok (NULL, delim);
 
-			if (arg2)
+			if (!arg1)
 			{
-				debug_display_mem_range(atoi(arg1), atoi(arg2));
+				printf("Invalid argument for \"%s\". See \"help\" for more information.\n", command);
 			}
 			else
 			{
-				debug_display_mem(atoi(arg1));
+				arg2 = strtok (NULL, delim);
+
+				if (!arg2)
+				{
+					debug_display_mem(atoi(arg1));
+				}
+				else
+				{
+					debug_display_mem_range(atoi(arg1), atoi(arg2));
+				}
 			}
 			break;
 
@@ -219,9 +242,13 @@ debug_command(char *command)
 			arg1 = strtok (NULL, delim);
 
 			if (!arg1)
+			{
 				debug_display_pcb();
+			}
 			else
+			{
 				debug_display_pcb_pid (atoi(arg1));
+			}
 			break;
 
 		case DEBUG_PAGETABLE:
@@ -251,17 +278,43 @@ debug_command(char *command)
 
 		case DEBUG_INODETABLE:
 			debug_display_inodetable();
-			break;	
-			
+			break;
+
+
+		case DEBUG_LOCATION:
+			arg1 = strtok(NULL, delim);
+
+			if(!arg1)
+			{
+				printf("Invalid argument for \"%s\". See \"help\" for more information.\n", command);
+			}
+			else
+			{
+				debug_display_location (atoi(arg1));
+			}
+			break;
+
 		case DEBUG_VAL:
-			arg1 = strtok (NULL, delim);
-			debug_display_val (arg1);		
-		break;
-		
+			arg1 = strtok(NULL, delim);
+
+			if (!arg1)
+			{
+				printf("Invalid argument for \"%s\". See \"help\" for more information.\n", command);
+			}
+			else
+			{
+				debug_display_val (arg1);
+			}
+			break;
+
+		case DEBUG_LIST:
+			debug_display_list();
+			break;
+
 		case DEBUG_HELP:
 			debug_display_help();
-		break;
-				
+			break;
+
 	default:
 			printf("Unknown command \"%s\". See \"help\" for more information.\n",command);
 	}
@@ -651,9 +704,31 @@ debug_display_dfl()
 }
 
 void debug_display_help(){
-		printf("Coming Soon\n");
-	}
-	
+	printf(" step / s \n\t Execution proceeds by a single step \n");
+	printf(" step / s <num> \n\t Execution proceeds by <num> number of steps \n");
+	printf(" continue / c \n\t Execution proceeds till the next BRKP instruction \n");
+	printf(" continue / c <num> \n\t Execution proceeds till the next <num> th occurence of the BRKP instruction \n");
+	printf(" reg / r \n\t Displays the contents of all the machine registers \n");
+	printf(" reg / r <register_name>  \n\t Displays the contents of the specified register \n");
+	printf(" mem / m <page_num>  \n\t Writes the contents of the memory page <page_num> to the file \"mem\" \n");
+	printf(" mem / m <page_num_1> <page_num_2>  \n\t Writes the contents of the memory from pages <page_num_1> to <page_num_2> to the file \"mem\" \n");
+	printf(" pcb / p \n\t Displays the Process Table entry of the process with the state as RUNNING \n");
+	printf(" pcb / p <pid> \n\t Displays the Process Table entry of the process with the given <pid> \n");
+	printf(" pagetable / pt \n\t Displays the Page Table at the location pointed by PTBR \n");
+	printf(" pagetable / pt <pid> \n\t Displays the <pid> th Page Table \n");
+	printf(" filetable / ft \n\t Displays the System Wide Open File Table \n");
+	printf(" memfreelist / mf \n\t Displays the Memory Free List \n");
+	printf(" diskfreelist / df \n\t Displays the memory copy of Disk Free List \n");
+	printf(" inodetable / it \n\t Displays the memory copy of the Inode Table \n");
+	printf(" usertable / ut \n\t Displays the memory copy of the User Table \n");
+	printf(" location / loc <address> \n\t Displays the content at memory address (address translation takes place if used in USER mode) \n");
+	printf(" val / v <address> \n\t Displays the content at memory address (no address translation occurs) \n");
+	printf(" watch / w <physical_address> \n\t Sets a watch point at this address \n");
+	printf(" watchclear / wc \n\t Clears all the watch points \n");
+	printf(" list / l \n\t List 10 instructions before and after the current instruction \n");
+	printf(" exit / e \n\t Exits the debug prompt and halts the machine \n");
+}
+
 int
 debug_display_inodetable ()
 {
@@ -717,6 +792,24 @@ debug_display_usertable()
 
 		/*Update ptr.*/
 		ptr = ptr + entry_size;
+	}
+
+	return TRUE;
+}
+
+int
+debug_display_list()
+{
+	char instr[DEBUG_STRING_LEN];
+	int i;
+
+	for (i = 0; i <= 2 * DEBUG_LIST_LEN; ++i)
+	{
+		memory_retrieve_raw_instr (instr, machine_translate_address(_db_status.ip + (i - DEBUG_LIST_LEN - 1) * XSM_INSTRUCTION_SIZE,FALSE));
+		if (i == DEBUG_LIST_LEN)
+			printf("%d* \t %s \n", _db_status.ip + (i - DEBUG_LIST_LEN - 1) * XSM_INSTRUCTION_SIZE, instr);
+		else
+			printf("%d \t %s \n", _db_status.ip + (i - DEBUG_LIST_LEN - 1) * XSM_INSTRUCTION_SIZE, instr);
 	}
 
 	return TRUE;
