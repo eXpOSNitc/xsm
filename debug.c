@@ -487,9 +487,9 @@ int debug_display_val(char *mem){
 int
 debug_display_pcb_pid (int pid)
 {
-	const char *fields[] = {"\nTick", "\nPID", "\nPPID", "\nUserID", "\nState", "\nSwap Flag", "\nInode Index",
-	"\nInput Buffer", "\nMode Flag", "\nUser Area Swap Status", "\nUser Area Page Number",
-	"\nKernel Stack Pointer", "\nUser Stack Pointer", "\nPTBR", "\nPTLR", "\nUnused"
+	const char *fields[] = {"Tick", "PID", "PPID", "UserID", "State", "Swap Flag", "Inode Index",
+	"Input Buffer", "Mode Flag", "User Area Swap Status", "User Area Page Number",
+	"Kernel Stack Pointer", "User Stack Pointer", "PTBR", "PTLR", "Unused"
 	};
 
 	const int fields_len[] = {1, 1, 1, 1 , 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
@@ -728,9 +728,9 @@ debug_display_dfl()
 
 void debug_display_help(){
 	printf(" step / s \n\t Execution proceeds by a single step \n");
-	printf(" step / s <num> \n\t Execution proceeds by <num> number of steps \n");
+	printf(" step / s <N> \n\t Execution proceeds by N number of steps \n");
 	printf(" continue / c \n\t Execution proceeds till the next BRKP instruction \n");
-	printf(" continue / c <num> \n\t Execution proceeds till the next <num> th occurence of the BRKP instruction \n");
+	printf(" continue / c <N> \n\t Execution proceeds till the next N'th occurence of the BRKP instruction \n");
 	printf(" reg / r \n\t Displays the contents of all the machine registers \n");
 	printf(" reg / r <register_name>  \n\t Displays the contents of the specified register \n");
 	printf(" mem / m <page_num>  \n\t Writes the contents of the memory page <page_num> to the file \"mem\" \n");
@@ -756,7 +756,7 @@ int
 debug_display_inodetable ()
 {
 	const char *fields[] = {
-		"\nType", "Name", "\nSize", "UID", "\nPerm.", "Unused", "\nD1", "D2", "D3", "D4", "Unused"
+		"Type", "Name", "Size", "UID", "Perm.", "Unused", "D1", "D2", "D3", "D4", "Unused"
 	};
 	const int fields_len[] = {
 		1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 4
@@ -797,7 +797,7 @@ int
 debug_display_usertable()
 {
 	const char *fields[] = {
-		"\nUser name", "\nEncrypted Password"
+		"User name", "Encrypted Password"
 	};
 	const int fields_len[] = {
 		1, 1
