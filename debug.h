@@ -38,7 +38,7 @@
 #define MAX_NUM_PAGES		10
 #define PTBR_PCB_OFFSET		14
 #define DEBUG_PT_BASE		29696
-#define DEBUG_LIST_LEN		10	
+#define DEBUG_LIST_LEN		10
 
 /* System wide open file table. */
 #define DEBUG_LOC_SWOFT		28928
@@ -71,6 +71,7 @@ struct _debug_status
 	int state;
 	int ip;
 	int skip;
+	int skip_command;
 	int wp[16];
 	int wp_size;
 	char command[DEBUG_COMMAND_LEN];
@@ -110,7 +111,7 @@ int
 debug_command_code (const char *cmd);
 
 int
-debug_skip_n (int num);
+debug_skip_n (int num, int debug_command);
 
 int
 debug_display_all_registers();

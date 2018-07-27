@@ -142,6 +142,8 @@ debug_show_interface ()
 	if (_db_status.skip > 0)
 	{
 		_db_status.skip--;
+		if(_db_status.skip_command == DEBUG_CONTINUE)
+			debug_deactivate();
 		return TRUE;
 	}
 
@@ -195,7 +197,7 @@ debug_command(char *command)
 
 			if (arg1)
 			{
-				debug_skip_n(atoi(arg1));
+				debug_skip_n(atoi(arg1), DEBUG_STEP);
 			}
 			return TRUE;
 
@@ -204,7 +206,7 @@ debug_command(char *command)
 
 			if (arg1)
 			{
-				debug_skip_n(atoi(arg1));
+				debug_skip_n(atoi(arg1), DEBUG_CONTINUE);
 			}
 			debug_deactivate();
 			return TRUE;
@@ -356,11 +358,13 @@ debug_command_code (const char *cmd)
 }
 
 int
-debug_skip_n (int num)
+debug_skip_n (int num, int debug_command)
 {
 	num--;
-	if (num > 0)
+	if (num > 0){
 		_db_status.skip = num;
+		_db_status.skip_command = debug_command;
+	}
 
 	return TRUE;
 }
