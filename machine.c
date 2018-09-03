@@ -295,6 +295,10 @@ machine_handle_exception()
    char *message;
    int code, mode;
    int curr_ip;
+   const char **reg_names;
+ 	 int num_regs;
+ 	 int i;
+ 	 char *content;
 
    xsm_word *reg_eip, *reg_epn, *reg_ec, *reg_ema;
 
@@ -330,10 +334,16 @@ machine_handle_exception()
       return XSM_SUCCESS;
    }
 
-   fprintf (stderr, "%s: System halted.\n", message);
-   /* TODO May print the machine status if required. */
-   fprintf (stderr, "Trace:\nEIP %s\tEPN %s\t EC %s\t EMA %s\n",
-      word_get_string(reg_eip), word_get_string(reg_epn), word_get_string(reg_ec), word_get_string(reg_ema));
+   fprintf (stderr, "%s: Dumping registers and machine halting.\n", message);
+
+   reg_names = registers_names();
+   num_regs = registers_len();
+ 	 for (i = 0; i < num_regs; ++i)
+ 	 {
+     content = registers_get_string (reg_names[i]);
+ 	   printf ("%s: %s\n", reg_names[i], content);
+   }
+
    return XSM_FAILURE;
 }
 
