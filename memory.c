@@ -41,6 +41,9 @@ memory_addr_page(int address)
 {
    int page;
 
+   if(address < 0)
+      return -1;
+
    page = address / XSM_PAGE_SIZE;
 
    return page;
@@ -48,7 +51,7 @@ memory_addr_page(int address)
 
 /* Paging hardware functions. */
 int
-memory_translate_address (int ptbr, int address, int write)
+memory_translate_address (int ptbr, int ptlr, int address, int write)
 {
    int page, offset;
    int target_page;
@@ -56,7 +59,7 @@ memory_translate_address (int ptbr, int address, int write)
    page = memory_addr_page(address);
    offset = address % XSM_PAGE_SIZE;
 
-   target_page = memory_translate_page(ptbr, page, write);
+   target_page = memory_translate_page(ptbr, ptlr, page, write);
 
    if (target_page < 0)
       return target_page;
@@ -86,12 +89,15 @@ memory_get_page (int page)
 }
 
 int
-memory_translate_page (int ptbr, int page, int write)
+memory_translate_page (int ptbr, int ptlr, int page, int write)
 {
    int page_entry, page_info;
    xsm_word *page_entry_w, *page_info_w;
    int entry;
    char *info;
+
+   if (page < 0 || page >= ptlr)
+      return XSM_MEM_ILLPAGE;
 
    page_entry = page * 2 + ptbr;
    page_info = page_entry + 1;

@@ -846,7 +846,7 @@ int
 debug_display_location (int loc)
 {
 	xsm_word *word;
-	int mode, ptbr;
+	int mode, ptbr, ptlr;
 
 	mode = machine_get_mode();
 
@@ -859,7 +859,8 @@ debug_display_location (int loc)
 		int tr_loc;
 
 		ptbr = registers_get_integer("PTBR");
-		tr_loc = memory_translate_address (ptbr, loc, FALSE);
+		ptlr = registers_get_integer("PTLR");
+		tr_loc = memory_translate_address (ptbr, ptlr, loc, FALSE);
 
 		if (tr_loc < 0)
 		{

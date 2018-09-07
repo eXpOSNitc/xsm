@@ -316,8 +316,9 @@ machine_handle_exception()
    // fetch ip store in eip
    curr_ip = word_get_integer(registers_get_register("IP"));
    word_store_integer(reg_eip, curr_ip);
+   word_store_integer(reg_ec, code);
 
-   switch(mode)
+   switch(code)
    {
       case EXP_ILLMEM:
          word_store_integer (reg_ema, exception_get_ma());
@@ -777,7 +778,7 @@ machine_get_address (int write)
 int
 machine_get_address_int (int write)
 {
-   int token, address;
+   int token, address, ret_addr;
    YYSTYPE token_info;
 
    /* Skip the opening square bracket. */
@@ -806,34 +807,41 @@ machine_get_address_int (int write)
 
    /* Ask the MMU to translate the address for us. */
 
-   address = machine_translate_address (address, write);
-
-   if (XSM_MEM_NOWRITE == address)
+   ret_addr = machine_translate_address (address, write);
+   
+   if (XSM_MEM_NOWRITE == ret_addr)
    {
       exception_set_ma (address);
       machine_register_exception("Access violation.", EXP_ILLMEM);
    }
 
-   else if (XSM_MEM_PAGEFAULT == address)
+   else if (XSM_MEM_PAGEFAULT == ret_addr)
    {
       exception_set_epn (memory_addr_page(address));
       machine_register_exception("Page fault.", EXP_PAGEFAULT);
    }
 
-   return address;
+   else if(XSM_MEM_ILLPAGE == ret_addr)
+   {
+      exception_set_ma (address);
+      machine_register_exception("Address outside logical address space.", EXP_ILLMEM);
+   }
+
+   return ret_addr;
 }
 
 int
 machine_translate_address (int address, int write)
 {
-   int ptbr;
+   int ptbr, ptlr;
 
    if (_thecpu.mode == PRIVILEGE_KERNEL)
       return address;
 
    /* User mode, ask the MMU to translate. */
    ptbr = word_get_integer (registers_get_register("PTBR"));
-   return memory_translate_address (ptbr, address, write);
+   ptlr = word_get_integer (registers_get_register("PTLR"));
+   return memory_translate_address (ptbr, ptlr, address, write);
 }
 
 int
