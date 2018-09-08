@@ -136,7 +136,7 @@ int
 debug_show_interface ()
 {
 	char command[DEBUG_COMMAND_LEN];
-	int done = FALSE;
+	int done = FALSE, addr;
 	char next_instr[DEBUG_STRING_LEN];
 
 	if (_db_status.skip > 0)
@@ -147,7 +147,11 @@ debug_show_interface ()
 		return TRUE;
 	}
 
-	memory_retrieve_raw_instr (next_instr, machine_translate_address(_db_status.ip,FALSE));
+	addr = machine_translate_address(_db_status.ip, FALSE, DEBUG_FETCH);
+	if(addr >= 0)
+		memory_retrieve_raw_instr (next_instr, addr);
+	else
+		next_instr[0] = '\0';
 
 	printf ("Next instruction to execute: %s\n", next_instr);
 
@@ -828,11 +832,15 @@ int
 debug_display_list()
 {
 	char instr[DEBUG_STRING_LEN];
-	int i;
+	int i, addr;
 
 	for (i = 0; i <= 2 * DEBUG_LIST_LEN; ++i)
 	{
-		memory_retrieve_raw_instr (instr, machine_translate_address(_db_status.ip + (i - DEBUG_LIST_LEN - 1) * XSM_INSTRUCTION_SIZE,FALSE));
+		addr =machine_translate_address(_db_status.ip + (i - DEBUG_LIST_LEN - 1) * XSM_INSTRUCTION_SIZE, FALSE, DEBUG_FETCH);
+		if(addr >= 0)
+			memory_retrieve_raw_instr (instr, addr);
+		else
+			instr[0]='\0';
 		if (i == DEBUG_LIST_LEN)
 			printf("%d* \t %s \n", _db_status.ip + (i - DEBUG_LIST_LEN - 1) * XSM_INSTRUCTION_SIZE, instr);
 		else

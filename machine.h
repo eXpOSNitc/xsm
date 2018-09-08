@@ -45,7 +45,7 @@
 #define BRKP      21
 #define INT       22
 
-#define LOADI     23 
+#define LOADI     23
 #define LOAD      24
 #define STORE     25
 #define ENCRYPT   26
@@ -91,7 +91,7 @@ struct _console_operation
    int operation;
 } console_operation;
 
-typedef 
+typedef
 struct _xsm_cpu
 {
    xsm_reg *regs;
@@ -103,7 +103,7 @@ struct _xsm_cpu
    /* For debugging purpose.
     * Whether there was a write to RAM and to which address was it
     * written to. A positive number denotes a valid write.
-    * This member is used to manage watch while debugging. 
+    * This member is used to manage watch while debugging.
     * There are two values. A low and a high. This is because the
     * XSM processor supports multiple memory accesses in a single instruction(SIMD).
     */
@@ -171,7 +171,7 @@ int
 machine_get_address_int (int write);
 
 int
-machine_translate_address (int address, int write);
+machine_translate_address (int address, int write, int type);
 
 xsm_word*
 machine_memory_get_word (int address);
@@ -212,7 +212,7 @@ machine_execute_ret ();
 int
 machine_execute_interrupt();
 
-int 
+int
 machine_execute_interrupt_do (int interrupt);
 
 int

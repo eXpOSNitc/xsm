@@ -11,6 +11,10 @@
 #define XSM_MEM_PAGEFAULT -2
 #define XSM_MEM_ILLPAGE -3
 
+#define INSTR_FETCH -5
+#define OPER_FETCH -6
+#define DEBUG_FETCH -7
+
 int
 memory_init ();
 

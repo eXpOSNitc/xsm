@@ -128,7 +128,7 @@ machine_serve_instruction (char _output_ *buffer, unsigned long _output_ *read_b
    ip_reg = machine_get_ipreg();
    ip_val = word_get_integer(ip_reg);
 
-   ip_val = machine_translate_address(ip_val, FALSE);
+   ip_val = machine_translate_address(ip_val, FALSE, INSTR_FETCH);
    instr_mem = machine_memory_get_word(ip_val);
 
    memcpy (buffer, instr_mem->val, bytes_to_read);
@@ -157,7 +157,7 @@ void
 machine_register_exception (char* message, int code)
 {
    int mode;
-
+printf("%s\n", message);
    mode = machine_get_mode();
    exception_set(message, code, mode);
    /* Abandon ship! Abandon ship! */
@@ -817,7 +817,33 @@ machine_get_address_int (int write)
 
    /* Ask the MMU to translate the address for us. */
 
-   ret_addr = machine_translate_address (address, write);
+   ret_addr = machine_translate_address (address, write, OPER_FETCH);
+
+   return ret_addr;
+}
+
+int
+machine_translate_address (int address, int write, int type)
+{
+   int ptbr, ptlr, ret_addr, curr_ip;
+
+   if (_thecpu.mode == PRIVILEGE_KERNEL)
+      return address;
+
+   /* User mode, ask the MMU to translate. */
+   ptbr = word_get_integer (registers_get_register("PTBR"));
+   ptlr = word_get_integer (registers_get_register("PTLR"));
+   ret_addr = memory_translate_address (ptbr, ptlr, address, write);
+
+   if (ret_addr < 0 && type == DEBUG_FETCH)
+      return ret_addr;
+
+   if (ret_addr < 0 && type == INSTR_FETCH)
+   {
+     curr_ip = word_get_integer(registers_get_register("IP"));
+     curr_ip = curr_ip + XSM_INSTRUCTION_SIZE;
+     word_store_integer (machine_get_ipreg(), curr_ip);
+   }
 
    if (XSM_MEM_NOWRITE == ret_addr)
    {
@@ -838,20 +864,6 @@ machine_get_address_int (int write)
    }
 
    return ret_addr;
-}
-
-int
-machine_translate_address (int address, int write)
-{
-   int ptbr, ptlr;
-
-   if (_thecpu.mode == PRIVILEGE_KERNEL)
-      return address;
-
-   /* User mode, ask the MMU to translate. */
-   ptbr = word_get_integer (registers_get_register("PTBR"));
-   ptlr = word_get_integer (registers_get_register("PTLR"));
-   return memory_translate_address (ptbr, ptlr, address, write);
 }
 
 int
@@ -1046,7 +1058,7 @@ machine_stack_pointer (int write)
    sp_reg = registers_get_register ("SP");
    stack_top = word_get_integer(sp_reg);
 
-   stack_top = machine_translate_address (stack_top, write);
+   stack_top = machine_translate_address (stack_top, write, OPER_FETCH);
 
    return machine_memory_get_word(stack_top);
 }
