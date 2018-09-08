@@ -157,7 +157,7 @@ void
 machine_register_exception (char* message, int code)
 {
    int mode;
-printf("%s\n", message);
+
    mode = machine_get_mode();
    exception_set(message, code, mode);
    /* Abandon ship! Abandon ship! */
