@@ -302,6 +302,10 @@ machine_handle_exception()
 
    xsm_word *reg_eip, *reg_epn, *reg_ec, *reg_ema;
 
+   curr_ip = word_get_integer(registers_get_register("IP"));
+   curr_ip = curr_ip - XSM_INSTRUCTION_SIZE;
+   word_store_integer (machine_get_ipreg(), curr_ip);
+
    /* Get the details about the exception. */
    mode = machine_get_mode ();
    code = exception_code ();
@@ -314,7 +318,6 @@ machine_handle_exception()
    reg_ema = registers_get_register("EMA");
 
    // fetch ip store in eip
-   curr_ip = word_get_integer(registers_get_register("IP"));
    word_store_integer(reg_eip, curr_ip);
    word_store_integer(reg_ec, code);
 
@@ -322,10 +325,17 @@ machine_handle_exception()
    {
       case EXP_ILLMEM:
          word_store_integer (reg_ema, exception_get_ma());
+         word_store_string (reg_epn, "");
          break;
 
       case EXP_PAGEFAULT:
+         word_store_string (reg_ema, "");
          word_store_integer (reg_epn, exception_get_epn());
+         break;
+
+      default:
+         word_store_string (reg_ema, "");
+         word_store_string (reg_epn, "");
          break;
    }
 
@@ -799,7 +809,7 @@ machine_get_address_int (int write)
 
       default:
          /* Mark him. */
-         machine_register_exception ("Invalid memory derefence.", EXP_ILLINSTR);
+         machine_register_exception("Invalid memory derefence.", EXP_ILLINSTR);
    }
 
    /* Next one is a bracket, neglect. */
@@ -808,7 +818,7 @@ machine_get_address_int (int write)
    /* Ask the MMU to translate the address for us. */
 
    ret_addr = machine_translate_address (address, write);
-   
+
    if (XSM_MEM_NOWRITE == ret_addr)
    {
       exception_set_ma (address);
