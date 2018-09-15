@@ -196,14 +196,14 @@ machine_get_spreg ()
 void
 machine_pre_execute(int ip_val)
 {
-   /* Clear the potential watchpoint trigger. */
-   _thecpu.mem_low = -1;
-
    /* If debugging was requested, activate the debug command line. */
    if (_theoptions.debug)
    {
       debug_next_step (ip_val);
    }
+
+   /* Clear the potential watchpoint trigger. */
+   _thecpu.mem_low = -1;
 }
 
 int
@@ -273,8 +273,8 @@ machine_run ()
 			Enabled Only in User mode
        */
 
-       if( machine_get_mode() == PRIVILEGE_USER)
-			machine_post_execute ();
+      if(machine_get_mode() == PRIVILEGE_USER)
+			   machine_post_execute ();
 
    }
 
@@ -362,7 +362,12 @@ void
 machine_post_execute ()
 {
    /* Tick the timers. */
-   _thecpu.timer--;
+   if(_thecpu.timer >= 0)
+      _thecpu.timer--;
+   if(_thecpu.disk_wait > 0)
+      _thecpu.disk_wait--;
+   if(_thecpu.console_wait > 0)
+      _thecpu.console_wait--;
 
    if (_thecpu.timer == 0)
    {
@@ -373,8 +378,6 @@ machine_post_execute ()
 
    else if (_thecpu.disk_state == XSM_DISK_BUSY)
    {
-      _thecpu.disk_wait--;
-
       if (_thecpu.disk_wait == 0)
       {
          if (XSM_DISKOP_LOAD == _thecpu.disk_op.operation)
@@ -394,7 +397,6 @@ machine_post_execute ()
 
    else if (XSM_CONSOLE_BUSY == _thecpu.console_state)
    {
-      _thecpu.console_wait--;
       if (_thecpu.console_wait == 0)
       {
          if (XSM_CONSOLE_PRINT == _thecpu.console_op.operation)
@@ -1026,7 +1028,7 @@ machine_push_do (xsm_word *reg)
    word_store_integer(sp_reg, stack_top + 1);
 
    /* Get the new stack pointer. */
-   xw_stack_top = machine_stack_pointer (FALSE);
+   xw_stack_top = machine_stack_pointer(TRUE);
 
    /* Put the word on the top of stack. */
    word_copy (xw_stack_top, reg);
@@ -1040,7 +1042,7 @@ machine_pop_do (xsm_word *dest)
    xsm_word *sp_reg;
    int stack_top;
 
-   xw_stack_top = machine_stack_pointer(TRUE);
+   xw_stack_top = machine_stack_pointer(FALSE);
    sp_reg = registers_get_register("SP");
    stack_top = word_get_integer(sp_reg);
 
@@ -1059,6 +1061,8 @@ machine_stack_pointer (int write)
    stack_top = word_get_integer(sp_reg);
 
    stack_top = machine_translate_address (stack_top, write, OPER_FETCH);
+   if(write)
+      _thecpu.mem_low = stack_top;
 
    return machine_memory_get_word(stack_top);
 }
@@ -1082,7 +1086,7 @@ machine_execute_call_do (int target)
    /* Save IP onto the stack. */
    ipreg = registers_get_register("IP");
    curr_ip = word_get_integer(ipreg);
-   stack_pointer = machine_stack_pointer (TRUE);
+   stack_pointer = machine_stack_pointer(TRUE);
    word_store_integer(stack_pointer, curr_ip);
 
    /* Update IP to the new code location. */
@@ -1172,7 +1176,7 @@ machine_execute_ret ()
    int curr_sp;
 
    spreg = registers_get_register ("SP");
-   stack_pointer = machine_stack_pointer (TRUE);
+   stack_pointer = machine_stack_pointer(FALSE);
    target = word_get_integer(stack_pointer);
 
    curr_sp = word_get_integer (spreg);
@@ -1207,12 +1211,18 @@ machine_execute_interrupt_do (int interrupt)
 {
    int target;
 
-   target = machine_interrupt_address (interrupt);
-
-   machine_execute_call_do (target);
-
    if (machine_get_mode() == PRIVILEGE_KERNEL)
       machine_register_exception("Invoking interrupts in kernel mode not allowed", EXP_ILLINSTR);
+
+   target = machine_interrupt_address (interrupt);
+   if (interrupt != XSM_INTERRUPT_EXHANDLER)
+   {
+     machine_execute_call_do (target);
+   }
+   else
+   {
+     word_store_integer(machine_get_ipreg(), target);
+   }
 
    /* Change the mode now, that will do. */
    machine_set_mode (PRIVILEGE_KERNEL);
