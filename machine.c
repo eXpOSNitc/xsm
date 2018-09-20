@@ -1278,11 +1278,15 @@ machine_execute_disk (int operation, int immediate)
    xsm_word *page_base;
 
    page_num = machine_read_disk_arg();
+   if (page_num <= 0 || page_num >= 128)
+      machine_register_exception("Invalid page number for disk instruction", EXP_ILLINSTR);
 
    /* Comma, neglect */
    tokenize_skip_token();
 
    block_num = machine_read_disk_arg();
+   if (block_num < 0 || block_num >= 512)
+      machine_register_exception("Invalid block number for disk instruction", EXP_ILLINSTR);
 
    if (immediate)
    {
