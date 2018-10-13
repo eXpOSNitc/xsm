@@ -47,5 +47,4 @@ debug.o: debug.c debug.h
 	$(CC) $(CFLAGS) -c debug.c
 
 clean:
-	$(RM) $(RMFLAGS) *.o
-	$(RM) $(RMFLAGS) xsm
+	$(RM) $(RMFLAGS) *.o xsm mem lex.yy.c
