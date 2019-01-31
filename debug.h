@@ -29,6 +29,17 @@
 #define DEBUG_HELP			15
 #define DEBUG_LIST			16
 #define DEBUG_VAL			17
+#define DEBUG_SEMTABLE 	18
+#define DEBUG_FILESTATUS 	19
+#define DEBUG_DISKSTATUS		20
+#define DEBUG_SYSTEMSTATUS		21
+#define DEBUG_TERMINALSTATUS		22
+#define DEBUG_BUFFERTABLE		23
+#define DEBUG_DISKMAPTABLE		24
+#define DEBUG_ROOTFILE		25
+#define DEBUG_RESOURCETABLE		26
+
+#define DEBUG_COUNT 26
 
 /* The following is highly dependent on the OS implementation. */
 #define DEBUG_LOC_PT		28672
@@ -38,19 +49,33 @@
 #define MAX_NUM_PAGES		10
 #define PTBR_PCB_OFFSET		14
 #define DEBUG_PT_BASE		29696
+#define RESOURCE_OFFSET		496
 #define DEBUG_LIST_LEN		10
 
-/* System wide open file table. */
-#define DEBUG_LOC_SWOFT		28928
-#define MAX_OPENFILE_NUM	32
-#define MAX_MEM_PAGE		128
+/* Data Structures */
+#define DEBUG_LOC_FILETABLE		28928
+#define DEBUG_LOC_SEMTABLE		29056
+#define DEBUG_LOC_FILESTATUS		29312
+#define DEBUG_LOC_DISKSTATUS		29552
+#define DEBUG_LOC_SYSTEMSTATUS		29560
+#define DEBUG_LOC_TERMINALSTATUS		29568
+#define DEBUG_LOC_BUFFERTABLE		30016
+#define DEBUG_LOC_DISKMAPTABLE		30032
+#define DEBUG_LOC_ROOTFILE		31744
 #define DEBUG_LOC_MFL		29184
 #define DEBUG_LOC_DFL		31232
-#define DISK_SIZE			512
 #define DEBUG_LOC_INODE		30208
+#define DEBUG_LOC_USERTABLE		31168
+
+#define MAX_OPENFILE_NUM	32
 #define MAX_FILE_NUM 		60
-#define DEBUG_LOC_USERTABLE 31168
 #define MAX_USER_NUM		16
+#define MAX_SEM_COUNT		32
+#define MAX_MEM_PAGE		128
+#define MAX_BUFFER		4
+#define MAX_RESOURCE		8
+
+#define DISK_SIZE			512
 
 /* The maximum number of watchpoints permitted. */
 #define DEBUG_MAX_WP		16
@@ -157,6 +182,33 @@ debug_display_pt_pid (int pid);
 
 int
 debug_display_ft ();
+
+int
+debug_display_st ();
+
+int
+debug_display_fst ();
+
+int
+debug_display_dst ();
+
+int
+debug_display_sst ();
+
+int
+debug_display_tst ();
+
+int
+debug_display_bt ();
+
+int
+debug_display_dmt ();
+
+int
+debug_display_rf ();
+
+int
+debug_display_rt ();
 
 int
 debug_display_memlist();
