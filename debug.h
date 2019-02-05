@@ -38,8 +38,9 @@
 #define DEBUG_DISKMAPTABLE		24
 #define DEBUG_ROOTFILE		25
 #define DEBUG_RESOURCETABLE		26
+#define DEBUG_PAGE		27
 
-#define DEBUG_COUNT 26
+#define DEBUG_COUNT 27
 
 /* The following is highly dependent on the OS implementation. */
 #define DEBUG_LOC_PT		28672
@@ -76,6 +77,8 @@
 #define MAX_RESOURCE		8
 
 #define DISK_SIZE			512
+#define MEM_SIZE			128
+#define PAGE_SIZE			512
 
 /* The maximum number of watchpoints permitted. */
 #define DEBUG_MAX_WP		16
@@ -94,7 +97,7 @@ typedef
 struct _debug_status
 {
 	int state;
-	int ip;
+	int prev_ip, ip;
 	int skip;
 	int skip_command;
 	int wp[16];
@@ -205,10 +208,16 @@ int
 debug_display_dmt ();
 
 int
+debug_dmt_pid (int pid);
+
+int
 debug_display_rf ();
 
 int
 debug_display_rt ();
+
+int
+debug_rt_pid (int pid);
 
 int
 debug_display_memlist();
@@ -227,6 +236,8 @@ debug_display_location (int loc);
 
 int
 debug_display_list();
+
+int debug_display_page (int ip);
 
 void
 debug_display_help ();

@@ -36,7 +36,8 @@ char *_db_commands_lh[] = {
 	"buffertable",
 	"diskmaptable",
 	"rootfile",
-	"resourcetable"
+	"resourcetable",
+	"page"
 };
 
 const
@@ -67,13 +68,15 @@ char *_db_commands_sh[] = {
 	"bt",
 	"dmt",
 	"rf",
-	"rt"
+	"rt",
+	"pg"
 };
 
 int
 debug_init ()
 {
 	_db_status.state = OFF;
+	_db_status.ip = -1;
 	_db_status.skip = 0;
 	strcpy(_db_status.command, "help");
 
@@ -129,6 +132,7 @@ debug_next_step (int curr_ip)
 	int mem_low, mem_high;
 	int wp = DEBUG_ERROR;
 
+	_db_status.prev_ip = _db_status.ip;
 	_db_status.ip = curr_ip;
 
 	machine_get_mem_access (&mem_low, &mem_high);
@@ -155,7 +159,7 @@ debug_show_interface ()
 {
 	char command[DEBUG_COMMAND_LEN];
 	int done = FALSE, addr;
-	char next_instr[DEBUG_STRING_LEN];
+	char prev_instr[DEBUG_STRING_LEN], next_instr[DEBUG_STRING_LEN];
 
 	if (_db_status.skip > 0)
 	{
@@ -165,21 +169,23 @@ debug_show_interface ()
 		return TRUE;
 	}
 
+	addr = machine_translate_address(_db_status.prev_ip, FALSE, DEBUG_FETCH);
+	if(addr >= 0)
+		memory_retrieve_raw_instr (prev_instr, addr);
+	else
+		prev_instr[0] = '\0';
+	printf("Previous instruction (IP = %d): %s\n", _db_status.prev_ip, prev_instr);
+
+	printf("Mode: %s \t IP: %d (%d) \t PID: %d\n",
+					(machine_get_mode() == PRIVILEGE_KERNEL)?"KERNEL":"USER",
+					_db_status.ip, _db_status.ip/PAGE_SIZE, debug_active_process());
+
 	addr = machine_translate_address(_db_status.ip, FALSE, DEBUG_FETCH);
 	if(addr >= 0)
 		memory_retrieve_raw_instr (next_instr, addr);
 	else
 		next_instr[0] = '\0';
-
 	printf("Next instruction to execute: %s\n", next_instr);
-	switch(machine_get_mode()){
-		case PRIVILEGE_KERNEL:
-			printf("Mode: KERNEL \t IP: %d\n", _db_status.ip);
-			break;
-		case PRIVILEGE_USER:
-			printf("Mode: USER \t IP: %d\n", _db_status.ip);
-			break;
-	}
 
 	while (!done)
 	{
@@ -339,7 +345,16 @@ debug_command(char *command)
 			break;
 
 		case DEBUG_DISKMAPTABLE:
-			debug_display_dmt();
+			arg1 = strtok (NULL, delim);
+
+			if (!arg1)
+			{
+				debug_display_dmt();
+			}
+			else
+			{
+				debug_dmt_pid (atoi(arg1));
+			}
 			break;
 
 		case DEBUG_ROOTFILE:
@@ -347,7 +362,16 @@ debug_command(char *command)
 			break;
 
 		case DEBUG_RESOURCETABLE:
-			debug_display_rt();
+			arg1 = strtok (NULL, delim);
+
+			if (!arg1)
+			{
+				debug_display_rt();
+			}
+			else
+			{
+				debug_rt_pid (atoi(arg1));
+			}
 			break;
 
 		case DEBUG_MEMFREELIST:
@@ -413,6 +437,19 @@ debug_command(char *command)
 
 		case DEBUG_LIST:
 			debug_display_list();
+			break;
+
+		case DEBUG_PAGE:
+			arg1 = strtok(NULL, delim);
+
+			if (!arg1)
+			{
+				printf("Invalid argument for \"%s\". See \"help\" for more information.\n", command);
+			}
+			else
+			{
+				debug_display_page (atoi(arg1));
+			}
 			break;
 
 		case DEBUG_HELP:
@@ -980,18 +1017,27 @@ debug_display_bt ()
 int
 debug_display_dmt ()
 {
-	int ptr, pid;
-	xsm_word *word;
+	int pid;
 
 	pid = debug_active_process();
 
-	if (pid <= -1)
+	if (pid > -1)
 	{
-		printf ("No active processes.\n");
-		return FALSE;
+		debug_dmt_pid (pid);
+		return TRUE;
 	}
 
-	ptr = DEBUG_LOC_BUFFERTABLE + pid * MAX_NUM_PAGES + 2;
+	printf ("No active processes.\n");
+	return FALSE;
+}
+
+int
+debug_dmt_pid (int pid)
+{
+	int ptr;
+	xsm_word *word;
+
+	ptr = DEBUG_LOC_DISKMAPTABLE + pid * MAX_NUM_PAGES + 2;
 
 	word = memory_get_word(ptr++);
 	printf ("Heap 1 in Disk: %s\t", word_get_string(word));
@@ -1051,24 +1097,60 @@ debug_display_rf ()
 int
 debug_display_rt ()
 {
-	int ptr, pid;
-	xsm_word *word;
+	int pid;
 
 	pid = debug_active_process();
 
-	if (pid <= -1)
+	if (pid > -1)
 	{
-		printf ("No active processes.\n");
+		return debug_rt_pid (pid);
+	}
+
+	printf ("No active processes.\n");
+	return FALSE;
+}
+
+int debug_rt_pid (int pid)
+{
+	int ptr, page, rid, i;
+	xsm_word *word;
+
+	page = DEBUG_LOC_PT + pid * PT_ENTRY_SIZE + 11;
+	word = memory_get_word(page);
+	page = word_get_integer(word);
+
+	if(page < 0 || page >= MEM_SIZE)
+	{
+		printf("Invalid User Area Page Number");
 		return FALSE;
 	}
 
-	ptr = DEBUG_LOC_BUFFERTABLE + pid * MAX_NUM_PAGES + 2;
+	ptr = page*PAGE_SIZE + RESOURCE_OFFSET;
 
-	word = memory_get_word(ptr++);
-	printf ("Heap 1 in Disk: %s\t", word_get_string(word));
+	for (i = 0; i < MAX_RESOURCE; ++i)
+	{
+		printf("%d. ", i);
 
-	word = memory_get_word(ptr++);
-	printf ("Heap 2 in Disk: %s\n", word_get_string(word));
+		word = memory_get_word(ptr++);
+		rid = word_get_integer(word);
+		printf ("Resource Identifier: ");
+
+		switch(rid)
+		{
+			case 0:
+				printf("FILE\t\t");
+				break;
+			case 1:
+				printf("SEMAPHORE\t");
+				break;
+			default:
+				printf("%s\t\t", word_get_string(word));
+				break;
+		}
+
+		word = memory_get_word(ptr++);
+		printf ("Index of Table Entry: %s\n", word_get_string(word));
+	}
 
 	return TRUE;
 }
@@ -1142,8 +1224,10 @@ void debug_display_help(){
 	printf(" pcb / p <pid> \n\t Displays the Process Table entry of the process with the given <pid> \n");
 	printf(" pagetable / pt \n\t Displays the Page Table at the location pointed by PTBR \n");
 	printf(" pagetable / pt <pid> \n\t Displays the <pid> th Page Table \n");
-	printf(" diskmaptable / dmt \n\t Displays the Disk Map Table \n");
-	printf(" resourcetable / rt \n\t Displays the Per-process Resource Table \n");
+	printf(" diskmaptable / dmt \n\t Displays the Disk Map Table of the process with the state as RUNNING \n");
+	printf(" diskmaptable / dmt <pid> \n\t Displays the Disk Map Table of the process with the given <pid> \n");
+	printf(" resourcetable / rt \n\t Displays the Per-process Resource Table of the process with the state as RUNNING \n");
+	printf( "resourcetable / rt <pid> \n\t Displays the Per-process Resource Table of the process with the given <pid> \n");
 	printf(" filetable / ft \n\t Displays the Open File Table \n");
 	printf(" semtable / st \n\t Displays the Semaphore Table \n");
 	printf(" memfreelist / mf \n\t Displays the Memory Free List \n");
@@ -1161,6 +1245,7 @@ void debug_display_help(){
 	printf(" watch / w <physical_address> \n\t Sets a watch point at this address \n");
 	printf(" watchclear / wc \n\t Clears all the watch points \n");
 	printf(" list / l \n\t List 10 instructions before and after the current instruction \n");
+	printf(" page / pg <ip> \n\t Displays the Page Number and Offset of the given <ip> \n");
 	printf(" exit / e \n\t Exits the debug prompt and halts the machine \n");
 }
 
@@ -1250,6 +1335,20 @@ debug_display_list()
 		else
 			printf("%d \t %s \n", _db_status.ip + (i - DEBUG_LIST_LEN) * XSM_INSTRUCTION_SIZE, instr);
 	}
+
+	return TRUE;
+}
+
+int
+debug_display_page (int ip)
+{
+	if (ip < 0)
+	{
+		printf("Invalid IP\n");
+		return FALSE;
+	}
+
+	printf("Page Number: %d \t Offset: %d\n", ip/PAGE_SIZE, ip%PAGE_SIZE);
 
 	return TRUE;
 }
