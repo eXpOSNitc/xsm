@@ -347,14 +347,16 @@ machine_handle_exception()
       return XSM_SUCCESS;
    }
 
-   fprintf (stderr, "%s: Dumping registers and machine halting.\n", message);
+   fprintf (stderr, "-----------------------------------\n");
 
-   reg_names = registers_names();
-   num_regs = registers_len();
- 	 for (i = 0; i < num_regs; ++i)
- 	 {
-     content = registers_get_string (reg_names[i]);
- 	   printf ("%s: %s\n", reg_names[i], content);
+   if (_theoptions.debug)
+   {
+      fprintf (stderr, "%s: Entering Debug Mode.\n", message);
+      debug_show_interface();
+   }
+   else
+   {
+     fprintf (stderr, "%s.\n", message);
    }
 
    return XSM_FAILURE;

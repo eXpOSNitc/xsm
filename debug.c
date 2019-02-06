@@ -174,18 +174,17 @@ debug_show_interface ()
 		memory_retrieve_raw_instr (prev_instr, addr);
 	else
 		prev_instr[0] = '\0';
-	printf("Previous instruction (IP = %d): %s\n", _db_status.prev_ip, prev_instr);
+	printf("Previous instruction at IP = %d: %s\n", _db_status.prev_ip, prev_instr);
 
-	printf("Mode: %s \t IP: %d (%d) \t PID: %d\n",
-					(machine_get_mode() == PRIVILEGE_KERNEL)?"KERNEL":"USER",
-					_db_status.ip, _db_status.ip/PAGE_SIZE, debug_active_process());
+	printf("Mode: %s \t PID: %d\n",
+					(machine_get_mode() == PRIVILEGE_KERNEL)?"KERNEL":"USER", debug_active_process());
 
 	addr = machine_translate_address(_db_status.ip, FALSE, DEBUG_FETCH);
 	if(addr >= 0)
 		memory_retrieve_raw_instr (next_instr, addr);
 	else
 		next_instr[0] = '\0';
-	printf("Next instruction to execute: %s\n", next_instr);
+	printf("Next instruction at IP = %d, Page No. = %d: %s\n", _db_status.ip, _db_status.ip/PAGE_SIZE, next_instr);
 
 	while (!done)
 	{
@@ -506,8 +505,14 @@ debug_display_all_registers()
 	for (i = 0; i < num_regs; ++i)
 	{
 		content = registers_get_string (reg_names[i]);
-		printf ("%s: %s\n", reg_names[i], content);
+		printf ("%s: %s\t", reg_names[i], content);
+		if((i < 20 && i%5 == 4) || i == 23 || i == 28)
+		{
+			printf ("\n");
+		}
 	}
+
+	printf ("\n");
 
 	return TRUE;
 }
@@ -809,15 +814,15 @@ debug_display_pt_at (int addr)
 
 	for (i = 0; i < MAX_NUM_PAGES; ++i)
 	{
-		printf ("VIRT: %d\t\t", i);
+		printf ("VIRT_PG_NO: %d\t\t", i);
 
 		word = memory_get_word(ptr);
-		printf ("PHY: %s\t\t", word_get_string(word));
+		printf ("PHY_PG_NO: %s\t\t", word_get_string(word));
 
 		ptr = ptr + 1;
 
 		word = memory_get_word(ptr);
-		printf ("AUX: %s\t\n", word_get_string(word));
+		printf ("AUX_FLAGS: %s\t\n", word_get_string(word));
 
 		ptr = ptr + 1;
 	}
@@ -1227,7 +1232,7 @@ void debug_display_help(){
 	printf(" diskmaptable / dmt \n\t Displays the Disk Map Table of the process with the state as RUNNING \n");
 	printf(" diskmaptable / dmt <pid> \n\t Displays the Disk Map Table of the process with the given <pid> \n");
 	printf(" resourcetable / rt \n\t Displays the Per-process Resource Table of the process with the state as RUNNING \n");
-	printf( "resourcetable / rt <pid> \n\t Displays the Per-process Resource Table of the process with the given <pid> \n");
+	printf(" resourcetable / rt <pid> \n\t Displays the Per-process Resource Table of the process with the given <pid> \n");
 	printf(" filetable / ft \n\t Displays the Open File Table \n");
 	printf(" semtable / st \n\t Displays the Semaphore Table \n");
 	printf(" memfreelist / mf \n\t Displays the Memory Free List \n");
@@ -1245,7 +1250,7 @@ void debug_display_help(){
 	printf(" watch / w <physical_address> \n\t Sets a watch point at this address \n");
 	printf(" watchclear / wc \n\t Clears all the watch points \n");
 	printf(" list / l \n\t List 10 instructions before and after the current instruction \n");
-	printf(" page / pg <ip> \n\t Displays the Page Number and Offset of the given <ip> \n");
+	printf(" page / pg <address> \n\t Displays the Page Number and Offset for the given <address> \n");
 	printf(" exit / e \n\t Exits the debug prompt and halts the machine \n");
 }
 
