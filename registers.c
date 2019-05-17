@@ -1,193 +1,149 @@
+/*
+An interface for handling registers.
+*/
+
 #include "registers.h"
-#include "word.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-static
-xsm_reg *_registers;
+static xsm_reg *_registers;
 
-static
-xsm_reg *_zero_register;
+static const char *_register_names[] = {
+    "R0",
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R9",
+    "R10",
+    "R11",
+    "R12",
+    "R13",
+    "R14",
+    "R15",
+    "R16",
+    "R17",
+    "R18",
+    "R19",
 
-#define REG_PORT_LOW 20
-#define REG_PORT_HIGH 23
+    "P0",
+    "P1",
+    "P2",
+    "P3",
 
-#define REG_KERN_LOW 27
-#define REG_KERN_HIGH 32
+    "BP",
+    "SP",
+    "IP",
 
-static
-const
-char *_register_names[] = {
-   "R0",
-   "R1",
-   "R2",
-   "R3",
-   "R4",
-   "R5",
-   "R6",
-   "R7",
-   "R8",
-   "R9",
-   "R10",
-   "R11",
-   "R12",
-   "R13",
-   "R14",
-   "R15",
-   "R16",
-   "R17",
-   "R18",
-   "R19",
+    "PTBR",
+    "PTLR",
+    "EIP",
+    "EC",
+    "EPN",
+    "EMA"};
 
-   "P0",
-   "P1",
-   "P2",
-   "P3",
-
-   "BP",
-   "SP",
-   "IP",
-   "PTBR",
-   "PTLR",
-   "EIP",
-   "EC",
-   "EPN",
-   "EMA"
-};
-
-int
-registers_init ()
+/* Initialise the registers */
+int registers_init()
 {
-   /* Set up the registers. */
-   _registers = (xsm_reg *) malloc (sizeof(xsm_reg) * XSM_NUM_REG);
-   
-   if (!_registers)
-      return XSM_FAILURE;
-      
-   /* The zero register. */
-   _zero_register = (xsm_reg *) malloc (sizeof(xsm_reg));
-   
-   if (!_zero_register)
-      return XSM_FAILURE;
-   
-   word_store_integer (_zero_register, 0);
-      
-   return XSM_SUCCESS;   
+    _registers = (xsm_reg *)malloc(sizeof(xsm_reg) * XSM_NUM_REG);
+
+    if (!_registers)
+        return XSM_FAILURE;
+
+    return XSM_SUCCESS;
 }
 
-int
-registers_get_register_code (const char *name)
+/* Returns the register code for the given register name */
+int registers_get_register_code(const char *name)
 {
-   register int i;
-   
-   for (i = 0; i < XSM_NUM_REG; ++i)
-   {
-      if (!strcasecmp(name, _register_names[i]))
-         return i;
-   }
-   
-   return -1;
+    int i;
+
+    for (i = 0; i < XSM_NUM_REG; i++)
+        if (!strcasecmp(name, _register_names[i]))
+            return i;
+
+    return -1;
 }
 
-xsm_word*
-registers_get_register(const char *name)
+/* Returns the register for the given register name */
+xsm_reg *registers_get_register(const char *name)
 {
-   int code;
+    int code = registers_get_register_code(name);
 
-   code = registers_get_register_code(name);
+    if (code > -1)
+        return &_registers[code];
 
-   if (code > -1)
-      return &_registers[code];
-   return NULL;
+    return NULL;
 }
 
-xsm_reg*
-registers_zero_register ()
+/* Deallocates the registers */
+void registers_destroy()
 {
-   return _zero_register;
+    free(_registers);
 }
 
-void
-registers_destroy()
+/* Returns the register names */
+const char **registers_names()
 {
-   free (_registers);
+    return _register_names;
 }
 
-const
-char **
-registers_names ()
+/* Returns the number of registers */
+int registers_len()
 {
-   return _register_names; 
+    return XSM_NUM_REG;
 }
 
-int
-registers_len()
+/* Returns the integer value stored in the given register */
+int registers_get_integer(const char *name)
 {
-   return XSM_NUM_REG;
+    xsm_word *reg = registers_get_register(name);
+    return word_get_integer(reg);
 }
 
-int
-registers_get_integer (const char *name)
+/* Returns the string value stored in the given register */
+char *registers_get_string(const char *name)
 {
-   xsm_word *reg;
+    xsm_word *reg = registers_get_register(name);
 
-   reg = registers_get_register(name);
-   return word_get_integer (reg);
+    if (!reg)
+        return NULL;
+
+    return word_get_string(reg);
 }
 
-char*
-registers_get_string (const char *name)
+/* Stores the integer value in the given register */
+int registers_store_integer(const char *name, int val)
 {
-   xsm_word *reg;
-
-   reg = registers_get_register(name);
-
-   if (!reg)
-      return NULL;
-   
-   return word_get_string(reg);
+    xsm_word *reg = registers_get_register(name);
+    return word_store_integer(reg, val);
 }
 
-int
-registers_store_integer (const char *name, int val)
+/* Stores the string value in the given register */
+int registers_store_string(const char *name, char *str)
 {
-   xsm_word *reg;
-
-   reg = registers_get_register(name);
-   return word_store_integer(reg, val);
+    xsm_word *reg = registers_get_register(name);
+    return word_store_string(reg, str);
 }
 
-int
-registers_store_string(const char *name, char *str)
+/* Checks whether the given register can be used in USER mode */
+int registers_umode(const char *reg)
 {
-   xsm_word *reg;
+    int code = registers_get_register_code(reg);
 
-   reg = registers_get_register(name);
-   return word_store_string(reg, str);
-}
+    if (code < 0)
+        return FALSE;
 
-int
-registers_umode(const char *reg)
-{
-   int code;
+    if (code >= REG_PORT_LOW && code <= REG_PORT_HIGH)
+        return FALSE;
 
-   code = registers_get_register_code(reg);
+    if (code >= REG_KERN_LOW && code <= REG_KERN_LOW)
+        return FALSE;
 
-   if (code < 0)
-   {
-      return FALSE;
-   }
-   
-   if (code >= REG_PORT_LOW && code <= REG_PORT_HIGH)
-   {
-      return FALSE;
-   }
-
-   if (code >= REG_KERN_LOW && code <= REG_KERN_LOW)
-   {
-      return FALSE;
-   }
-
-   return TRUE;
+    return TRUE;
 }

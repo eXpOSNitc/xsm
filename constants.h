@@ -1,6 +1,6 @@
-#ifndef _XSM_CONSTANTS_H
+#ifndef XSM_CONSTANTS_H
 
-#define _XSM_CONSTANTS_H
+#define XSM_CONSTANTS_H
 
 #include <stdbool.h>
 
@@ -12,17 +12,16 @@
 #define XSM_NUM_REG 33
 
 #define XSM_ILLINSTR -1
-
 #define XSM_SUCCESS 1
 #define XSM_FAILURE 0
 
 #define XSM_INSTRUCTION_SIZE 2
 
-/* Disk states. */
+/* Disk states */
 #define XSM_DISK_IDLE 0
 #define XSM_DISK_BUSY 1
 
-/* Console states. */
+/* Console states */
 #define XSM_CONSOLE_IDLE 0
 #define XSM_CONSOLE_BUSY 1
 
@@ -40,7 +39,6 @@
 #define XSM_INTERRUPT_DISK 2
 #define XSM_INTERRUPT_CONSOLE 3
 
-#define _input_
-#define _output_
+static const char *XSM_DEFAULT_DISK = "../xfs-interface/disk.xfs";
 
 #endif

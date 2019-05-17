@@ -1,16 +1,14 @@
 %{
-   /* Include files. */
+   
    #include <stdlib.h>
    #include "machine.h"
    #include "lexer.h"
 
    YYSTYPE yylval;
 
-   int
-   machine_serve_instruction (char *buffer, yy_size_t *read_bytes, int max);
+   int machine_serve_instruction (char *buffer, yy_size_t *read_bytes, int max);
 
-   void
-   lexer_buffer_reset ()
+   void lexer_buffer_reset ()
    {
       YY_FLUSH_BUFFER;
    }
@@ -21,6 +19,7 @@
    }\
 
 %}
+
 %%
 
 -?[0-9]+ {
@@ -29,7 +28,6 @@
 }
 
 \"[^"]* {
-   /* Hack! */
    yylval.str = yytext + 1;
    yytext[yyleng] = '\0';
    return TOKEN_STRING;
@@ -68,4 +66,3 @@ R[0-9]+ {
 }
 
 . ;
-
