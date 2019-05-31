@@ -85,6 +85,7 @@ typedef struct _debug_status
 {
     int state;
     int prev_ip, ip;
+    int prev_mode;
     int skip;
     int skip_command;
     int wp[16];

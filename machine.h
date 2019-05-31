@@ -131,7 +131,7 @@ void machine_post_execute();
 int machine_execute_instruction(int opcode);
 xsm_word *machine_get_address(int write);
 int machine_get_address_int(int write);
-int machine_translate_address(int address, int write, int type);
+int machine_translate_address(int address, int write, int type, int mode);
 xsm_word *machine_memory_get_word(int address);
 int machine_execute_mov();
 int machine_execute_arith(int opcode);

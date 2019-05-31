@@ -75,6 +75,7 @@ int debug_init()
 {
     _db_status.state = OFF;
     _db_status.ip = -1;
+    _db_status.prev_mode = PRIVILEGE_KERNEL;
     _db_status.skip = 0;
     strcpy(_db_status.command, "help");
 
@@ -116,7 +117,9 @@ int debug_next_step(int curr_ip)
     }
 
     if (_db_status.state == ON)
-        return debug_show_interface();
+        debug_show_interface();
+
+    _db_status.prev_mode = machine_get_mode();
 
     return TRUE;
 }
@@ -135,21 +138,22 @@ int debug_show_interface()
         return TRUE;
     }
 
-    addr = machine_translate_address(_db_status.prev_ip, FALSE, DEBUG_FETCH);
+    // Get the previous instruction
+    addr = machine_translate_address(_db_status.prev_ip, FALSE, DEBUG_FETCH, _db_status.prev_mode);
     if (addr >= 0)
         memory_retrieve_raw_instr(prev_instr, addr);
     else
         prev_instr[0] = '\0';
 
-    printf("Previous instruction at IP = %d: %s\n", _db_status.prev_ip, prev_instr);
-    printf("Mode: %s \t PID: %d\n", (machine_get_mode() == PRIVILEGE_KERNEL) ? "KERNEL" : "USER", debug_active_process());
-
-    addr = machine_translate_address(_db_status.ip, FALSE, DEBUG_FETCH);
+    // Get the next instruction 
+    addr = machine_translate_address(_db_status.ip, FALSE, DEBUG_FETCH, machine_get_mode());
     if (addr >= 0)
         memory_retrieve_raw_instr(next_instr, addr);
     else
         next_instr[0] = '\0';
 
+    printf("Previous instruction at IP = %d: %s\n", _db_status.prev_ip, prev_instr);
+    printf("Mode: %s \t PID: %d\n", (machine_get_mode() == PRIVILEGE_KERNEL) ? "KERNEL" : "USER", debug_active_process());
     printf("Next instruction at IP = %d, Page No. = %d: %s\n", _db_status.ip, _db_status.ip / XSM_PAGE_SIZE, next_instr);
 
     while (!done)
@@ -1168,7 +1172,7 @@ int debug_display_list()
 
     for (i = 0; i <= 2 * DEBUG_LIST_LEN; i++)
     {
-        addr = machine_translate_address(_db_status.ip + (i - DEBUG_LIST_LEN) * XSM_INSTRUCTION_SIZE, FALSE, DEBUG_FETCH);
+        addr = machine_translate_address(_db_status.ip + (i - DEBUG_LIST_LEN) * XSM_INSTRUCTION_SIZE, FALSE, DEBUG_FETCH, machine_get_mode());
         if (addr >= 0)
             memory_retrieve_raw_instr(instr, addr);
         else

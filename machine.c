@@ -154,7 +154,7 @@ int machine_serve_instruction(char *buffer, unsigned long *read_bytes, int max)
 
     ip_reg = machine_get_ipreg();
     ip_val = word_get_integer(ip_reg);
-    ip_val = machine_translate_address(ip_val, FALSE, INSTR_FETCH);
+    ip_val = machine_translate_address(ip_val, FALSE, INSTR_FETCH, machine_get_mode());
     instr_mem = machine_memory_get_word(ip_val);
 
     memcpy(buffer, instr_mem->val, bytes_to_read);
@@ -527,16 +527,16 @@ int machine_get_address_int(int write)
     /* Neglect the closing bracket */
     tokenize_next_token(&token_info);
 
-    ret_addr = machine_translate_address(address, write, OPER_FETCH);
+    ret_addr = machine_translate_address(address, write, OPER_FETCH, machine_get_mode());
     return ret_addr;
 }
 
 /* Translate the logical address */
-int machine_translate_address(int address, int write, int type)
+int machine_translate_address(int address, int write, int type, int mode)
 {
     int ptbr, ptlr, ret_addr, curr_ip;
 
-    if (_thecpu.mode == PRIVILEGE_KERNEL)
+    if (mode == PRIVILEGE_KERNEL)
         return address;
 
     ptbr = word_get_integer(registers_get_register("PTBR"));
@@ -931,7 +931,7 @@ xsm_word *machine_stack_pointer(int write)
     xsm_word *sp_reg = machine_get_spreg();
 
     stack_top = word_get_integer(sp_reg);
-    stack_top = machine_translate_address(stack_top, write, OPER_FETCH);
+    stack_top = machine_translate_address(stack_top, write, OPER_FETCH, machine_get_mode());
 
     if (write)
         _thecpu.mem_left = stack_top;
